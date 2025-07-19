@@ -1,0 +1,29 @@
+
+/*
+    Stage System
+        Stage -
+            std::vector<MoveNode[it's a gameObject]>
+                Npcs - 
+                MoveNode 
+                    position                            
+                    shot   
+                    endPoint
+    
+    json
+    level1.json
+    "Stages":
+    {
+        "Stage1":
+        {
+            "MoveNodes":
+            {
+                "1":
+                {
+                        "pos": { "1", "1", "1"}
+                        ....        
+                }
+            }
+        }
+    }
+
+*/
