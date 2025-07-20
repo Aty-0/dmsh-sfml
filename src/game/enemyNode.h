@@ -11,11 +11,12 @@ namespace dmsh::game
     { 
         public:
             EnemyNode() : 
-                m_isSelected(false)
+                m_isSelected(false), 
+                m_nodeEditor(nullptr)
             {
                 
             }
-            virtual void onStart() override;
+
             virtual void onMouseSelected(const sf::Vector2f& pos) override;
         private:
             friend class NodeEditor; 

@@ -1,5 +1,6 @@
 #include "collider.h"
 #include "gameObject.h"
+#include "debug.h"
 
 namespace dmsh::core
 {
@@ -38,5 +39,15 @@ namespace dmsh::core
         
         return rect1.findIntersection(rect2).has_value();
     }
+
+    void RectangleCollider::onRender(sf::RenderWindow& window) 
+    {
+        if (m_showRect)
+        {
+            auto rect = updateRectByTransform(*this);
+            debug::Square::draw(window, rect.position, rect.size, sf::Color::Magenta);
+        }
+    }
+        
     
 }

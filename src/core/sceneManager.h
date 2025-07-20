@@ -9,7 +9,7 @@ namespace dmsh::core
     // TODO: make it like container 
     struct Scene 
     {
-        std::vector<std::shared_ptr<GameObject>> GameObjects;
+        std::vector<std::weak_ptr<GameObject>> GameObjects;
     };
 
     class SceneManager : public Singleton<SceneManager>
@@ -29,7 +29,7 @@ namespace dmsh::core
             inline std::shared_ptr<T> createGameObject()
             {
                 static_assert(std::is_same<GameObject, T>::value 
-                    || std::is_base_of<GameObject, T>::value, "It's a not a game object or not a based of game object class");
+                    || std::is_base_of<GameObject, T>::value, "T must be GameObject or derived from GameObject");
 
                 auto go = std::make_shared<T>();
                 static std::uint32_t id = 0;
@@ -38,6 +38,8 @@ namespace dmsh::core
                 
                 DMSH_DEBUG("create game object %i", id);
                 id++;
+                
+                m_scene.GameObjects.shrink_to_fit();  
                 m_scene.GameObjects.push_back(go);
                 return go;
             }
@@ -47,16 +49,27 @@ namespace dmsh::core
                 if (go == nullptr)
                     return;
 
-                std::erase(m_scene.GameObjects, go);
-                go.reset();
+                std::erase_if(m_scene.GameObjects, [&](const std::weak_ptr<GameObject>& weak) {
+                        auto locked = weak.lock();
+                        if (locked) 
+                        {
+                            return locked == go; 
+                        }
+                        // Remove expired ptr
+                        return true;  
+                });
             }
 
             inline std::string toString() const 
             {
                 std::stringstream out;
                 std::int32_t index = 0;
-                for (auto go : m_scene.GameObjects)
+                for (auto goWeak : m_scene.GameObjects)
                 {
+                    auto go = goWeak.lock();
+                    if (!go)
+                        continue;
+
                     out << index << ": z:" << go->getZDepth() << " id:" << go->m_id << "\n";
                     index++; 
                 }

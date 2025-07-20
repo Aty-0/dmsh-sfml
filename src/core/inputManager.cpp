@@ -7,10 +7,9 @@ namespace dmsh::core
     InputManager::~InputManager()
     {
         m_listeners.clear();
-        m_listeners.shrink_to_fit();
     }
 
-    void InputManager::addListener(const InputListenerType& type, const KeyCode& key, 
+    void InputManager::addListener(const std::string& name, const InputListenerType& type, const KeyCode& key, 
         const std::function<void()>& callback)
     {
         auto listener = Listener();
@@ -18,21 +17,21 @@ namespace dmsh::core
         listener.type = type;
         listener.keyCode = key;
         listener.callback = callback;
-        m_listeners.push_back(listener);
+        m_listeners.insert({name, listener});
     }
 
-    void InputManager::addListener(const InputListenerType& type, const MouseButtons& button, 
+    void InputManager::addListener(const std::string& name, const InputListenerType& type, const MouseButtons& button, 
         const std::function<void()>& callback)
     {
         auto listener = Listener();
         listener.device = InputDevice::Mouse;
         listener.type = type;
-        listener.mouseButtons = button;
+        listener.mouseButton = button;
         listener.callback = callback;
-        m_listeners.push_back(listener);
+        m_listeners.insert({name, listener});
     }
     
-    void InputManager::addListener(const  InputListenerType& type, const JoystickAxis& axis, 
+    void InputManager::addListener(const std::string& name, const InputListenerType& type, const JoystickAxis& axis, 
         const std::function<void()>& callback)
     {
         auto listener = Listener();
@@ -40,36 +39,22 @@ namespace dmsh::core
         listener.type = type;
         listener.joystickAxis = axis;
         listener.callback = callback;
-        m_listeners.push_back(listener);
+        m_listeners.insert({name, listener});
     }
 
-    void InputManager::removeListener(const KeyCode& key)
+    void InputManager::removeListener(const std::string& name)
     {
-        std::erase_if(m_listeners, [&](auto elem) { 
-            return elem.keyCode == key;
-        });
+        m_listeners.erase(name);
     }
 
-    void InputManager::removeListener(const MouseButtons& button)
-    {
-        std::erase_if(m_listeners, [&](auto elem) { 
-            return elem.mouseButtons == button;
-        });
-    }
-
-    void InputManager::removeListener(const JoystickAxis& axis)
-    {
-        std::erase_if(m_listeners, [&](auto elem) { 
-            return elem.joystickAxis == axis;
-        });
-    }
-    
     void InputManager::update()
     {
-        std::ranges::for_each(m_listeners, [&](auto& listener) {                        
+        for (const auto& [key, listener] : m_listeners)
+        {
             if (listener.stayActive)
                 listener.callback();     
-        });
+        }                     
+        
     }
 
     bool InputManager::isKeyDown(const KeyCode& key) const
@@ -84,7 +69,8 @@ namespace dmsh::core
               
     void InputManager::process(const sf::Event& event)
     {
-        std::ranges::for_each(m_listeners, [&](auto& listener) {                        
+        for (auto& [key, listener] : m_listeners)
+        {
             switch (listener.device)
             {
                 case InputDevice::Keyboard:
@@ -147,15 +133,29 @@ namespace dmsh::core
                         case InputListenerType::KeyPressed:   
                         {
                             auto button = event.getIf<sf::Event::MouseButtonPressed>();
-                            if (button != nullptr && button->button == listener.mouseButtons && listener.callback != nullptr)
+                            if (button != nullptr && button->button == listener.mouseButton && listener.callback != nullptr)
                                 listener.callback();                 
                             break;                
                         }
                         case InputListenerType::KeyReleased:
                         {
                             auto button = event.getIf<sf::Event::MouseButtonReleased>();
-                            if (button != nullptr && button->button == listener.mouseButtons && listener.callback != nullptr)
+                            if (button != nullptr && button->button == listener.mouseButton && listener.callback != nullptr)
                                 listener.callback();                 
+                            break;                                    
+                        }
+                        case InputListenerType::KeyHold:
+                        {
+                            if (listener.callback == nullptr)
+                                break;
+
+                            auto buttonPressed = event.getIf<sf::Event::MouseButtonPressed>();
+                            auto buttonReleased = event.getIf<sf::Event::MouseButtonReleased>();
+                            
+                            if (buttonPressed != nullptr && buttonPressed->button == listener.mouseButton)
+                                listener.stayActive = true;
+                            else if (listener.stayActive && buttonReleased != nullptr && buttonReleased->button == listener.mouseButton)
+                                listener.stayActive = false;
                             break;                                    
                         }
                         default:
@@ -175,6 +175,6 @@ namespace dmsh::core
                     DMSH_ASSERT(false, "Unknown device");
                     break;
             }
-        });
+        }
     }
 }

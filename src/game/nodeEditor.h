@@ -2,50 +2,60 @@
 #include "../core/sceneManager.h"
 #include "../core/component.h"
 #include "../core/inputManager.h"
+#include "../core/debug.h"
+#include "../core/window.h"
+
 #include "enemyNode.h"
 #include <vector>
 
 namespace dmsh::game
 {    
     // TODO: Patterns
-    class Line
-    {
-        public:
-            static void drawLine(sf::RenderWindow& window, const sf::Vector2f& first, const sf::Vector2f& end, const sf::Color& color) 
-            {
-                const sf::Vertex line[] =
-                {
-                    { first, color, { 0.0f , 0.0f } }, 
-                    { end, color, { 0.0f , 0.0f } } 
-                };
-
-                window.draw(line, 2, sf::PrimitiveType::Lines);
-            }
-    };
-
     class NodeEditor : public core::Component
     {
         public:
             NodeEditor()
             {
                 const auto inputManager = core::InputManager::getInstance();
-                inputManager->addListener(core::InputListenerType::KeyPressed, core::KeyCode::Z, [this]() {
+
+                inputManager->addListener("editor_switch_edit_mode", core::InputListenerType::KeyPressed, core::KeyCode::Z, [this]() {
                     m_onEditMode = !m_onEditMode;
                 });
+                
+                inputManager->addListener("editor_move_node", core::InputListenerType::KeyHold, core::MouseButtons::Left, [this]() {        
+                    if (!m_selected)
+                        return;
+
+                    if (m_onEditMode && m_selected->m_isSelected)
+                    {
+                        static const auto gameWindow = core::Window::getInstance();
+                        const auto mousePos = gameWindow->getMousePosition();
+                        const auto worldCoords = gameWindow->getWindow().mapPixelToCoords(mousePos);
+                        m_selected->getOwner()->getTransform().setPosition(worldCoords);
+                    }
+                });
+
             }   
             
             virtual void onRender(sf::RenderWindow& window) override
             {
-                std::shared_ptr<EnemyNode> prev = nullptr; 
+                if (m_nodes.size() < 1)
+                    return;
 
+                std::shared_ptr<EnemyNode> prev = nullptr; 
                 for (auto node : m_nodes)
                 {
+                    if (node == nullptr) 
+                    {
+                        continue;
+                    }
+
                     if (prev != nullptr)
                     {
                         auto currentPos = node->getOwner()->getTransform().getPosition();
                         auto prevPos = prev->getOwner()->getTransform().getPosition();
 
-                        Line::drawLine(window, currentPos, prevPos, sf::Color::White);
+                        core::debug::Line::draw(window, currentPos, prevPos, sf::Color::White);
                     }
 
                     prev = node;
@@ -58,14 +68,16 @@ namespace dmsh::game
                 if (m_onEditMode)
                     return;
 
-                const static auto sceneManager = core::SceneManager::getInstance();
+                static const auto sceneManager = core::SceneManager::getInstance();
                 auto go = sceneManager->createGameObject<core::GameObject>();
                 
                 auto collider = go->createComponent<core::RectangleCollider>();
-                collider->setRect(sf::FloatRect { { 0.0f, 0.0f }, { 30.0f, 30.0f } });
+
+                constexpr sf::Vector2f size = { 30.0f, 30.0f };
+                collider->setRect(sf::FloatRect { { 0.0f, 0.0f }, size });
                 
                 auto& goDrawable = go->getDrawable().createDrawable<sf::RectangleShape>();
-                goDrawable.setSize({30, 30});
+                goDrawable.setSize(size);
                 goDrawable.setFillColor(sf::Color::White);
 
                 auto& transform = go->getTransform();

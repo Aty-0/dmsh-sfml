@@ -22,8 +22,22 @@ namespace dmsh::core
             
             virtual ~GameObject()
             {
+                onDestroy();
+                
                 m_drawable.reset();
                 m_transform.reset();
+
+                m_components.clear();
+                m_components.shrink_to_fit();
+            }
+
+            virtual void onDestroy()
+            {
+                for (auto component : m_components)
+                {
+                    if (component != nullptr)
+                        component->onDestroy();
+                }
             }
 
             virtual void onStart()
@@ -127,7 +141,9 @@ namespace dmsh::core
             {
                 static_assert(std::is_base_of<Component, T>::value, "class must be based on Component");                
                 auto component = std::make_shared<T>(std::forward<Args>(args)...);
-                component->setOwner(shared_from_this());
+                auto self = shared_from_this();
+                DMSH_ASSERT(self, "self is invalid");
+                component->setOwner(self);
                 component->onStart();
                 m_components.push_back(component);
                 return component;
@@ -137,7 +153,9 @@ namespace dmsh::core
             inline std::shared_ptr<T> addComponent(std::shared_ptr<T> component, Args&&... args) const
             {
                 static_assert(std::is_base_of<Component, T>::value, "class must be based on Component");                
-                component->setOwner(shared_from_this());
+                auto self = shared_from_this();
+                DMSH_ASSERT(self, "self is invalid");
+                component->setOwner(self);
                 component->onStart();
                 m_components.push_back(component);
                 return component;
@@ -149,11 +167,15 @@ namespace dmsh::core
                 static_assert(std::is_base_of<Component, T>::value, "class must be based on Component");                
                 for (const auto& component : m_components)
                 {
-                    if (auto derived = std::dynamic_pointer_cast<T>(component))
+                    if (!component)
+                        continue;
+                    const auto derived = std::dynamic_pointer_cast<T>(component);
+                    if (derived != nullptr)
                     {
                         return derived;
                     }
                 }
+                
                 return nullptr;
             }
     };

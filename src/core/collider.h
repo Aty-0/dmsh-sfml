@@ -17,10 +17,12 @@ namespace dmsh::core
     {
         virtual bool contains(const sf::Vector2f& pos) const override;
         virtual bool intersect(const Collider& collider) const override;        
-        
+        virtual void onRender(sf::RenderWindow& window) override;
+
         inline sf::FloatRect getRect() const { return m_rect; } 
         inline void setRect(const sf::FloatRect& rect) { m_rect = rect; }
         private:
+            bool m_showRect;
             sf::FloatRect m_rect;
     };
 }

@@ -4,7 +4,7 @@
 - [x] z depth
 - [x] mouse picking
 - [x] tags
-- [ ] debug draw
+- [x] debug draw
 - [ ] rename getDrawable in Drawable it's weird
 - [ ] mouse hover
 - [ ] ray trace
@@ -17,6 +17,8 @@
     - [x] callback on collision 
     - [ ] push objects on collision if it's dynamic 
     - [ ] (collsion bug) if something already colliding with object, that's cause that other objects is not triggering enter callback
+        - I think, to we need to store collided object in collider to fix this bug
+
 - [ ] input
     - [x] listener logic
     - [x] support for keyboard 

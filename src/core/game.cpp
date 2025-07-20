@@ -55,7 +55,7 @@ namespace dmsh::core
         sceneManager->rebuildZOrdering();
         
         // Add listener for mouse select for game objects
-        inputManager->addListener(core::InputListenerType::KeyPressed, core::MouseButtons::Left, [&]() {
+        inputManager->addListener("engine_scene_on_mouse_clicked", core::InputListenerType::KeyPressed, core::MouseButtons::Left, [&]() {
             sceneManager->onMouseClicked(sfWindow);
         });
 

@@ -21,19 +21,19 @@ namespace dmsh::game
                 shape.setFillColor(sf::Color::White);
                 const auto inputManager = core::InputManager::getInstance();
     
-                inputManager->addListener(core::InputListenerType::KeyHold, core::KeyCode::A, [this]() {
+                inputManager->addListener("player_move_right", core::InputListenerType::KeyHold, core::KeyCode::Right, [this]() {
                     m_move.x = -1;
                 });
     
-                inputManager->addListener(core::InputListenerType::KeyHold, core::KeyCode::D, [this]() {
+                inputManager->addListener("player_move_left", core::InputListenerType::KeyHold, core::KeyCode::Left, [this]() {
                     m_move.x = 1;
                 });
     
-                inputManager->addListener(core::InputListenerType::KeyHold, core::KeyCode::W, [this]() {
+                inputManager->addListener("player_move_forward", core::InputListenerType::KeyHold, core::KeyCode::Up, [this]() {
                     m_move.y = -1;
                 });
     
-                inputManager->addListener(core::InputListenerType::KeyHold, core::KeyCode::S, [this]() {
+                inputManager->addListener("player_move_backward", core::InputListenerType::KeyHold, core::KeyCode::Down, [this]() {
                     m_move.y = 1;
                 });
                 

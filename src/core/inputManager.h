@@ -1,7 +1,7 @@
 #pragma once
 #include "common.h"
 #include <functional>
-#include <vector>
+#include <map>
 
 namespace dmsh::core
 {
@@ -32,7 +32,7 @@ namespace dmsh::core
             InputDevice device;
             InputListenerType type;
             KeyCode keyCode;
-            MouseButtons mouseButtons;
+            MouseButtons mouseButton;
             JoystickAxis joystickAxis;
             std::function<void()> callback;
             bool stayActive; // key hold
@@ -41,18 +41,16 @@ namespace dmsh::core
         public:
             InputManager() { }
             ~InputManager();
-            void addListener(const InputListenerType& type, const KeyCode& key, 
+            void addListener(const std::string& name, const InputListenerType& type, const KeyCode& key, 
                 const std::function<void()>& callback);
 
-            void addListener(const InputListenerType& type, const MouseButtons& button, 
+            void addListener(const std::string& name, const InputListenerType& type, const MouseButtons& button, 
                 const std::function<void()>& callback);
 
-            void addListener(const InputListenerType& type, const JoystickAxis& axis, 
+            void addListener(const std::string& name, const InputListenerType& type, const JoystickAxis& axis, 
                 const std::function<void()>& callback);
 
-            void removeListener(const KeyCode& key);
-            void removeListener(const MouseButtons& button);
-            void removeListener(const JoystickAxis& axis);
+            void removeListener(const std::string& name);
             
             void update();
             void process(const sf::Event& event);
@@ -61,6 +59,6 @@ namespace dmsh::core
             bool isKeyReleased(const KeyCode& key) const;
               
         private:
-            std::vector<InputManager::Listener> m_listeners;
+            std::map<std::string, InputManager::Listener> m_listeners;
     };
 }
