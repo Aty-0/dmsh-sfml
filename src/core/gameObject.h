@@ -42,7 +42,7 @@ namespace dmsh::core
 
             virtual void onStart()
             {
-
+                // Nothing here
             }
             
             virtual void onRender(sf::RenderWindow& window) 
@@ -69,6 +69,15 @@ namespace dmsh::core
                 {
                     if (component != nullptr)
                         component->onMouseClicked(pos);
+                }
+            }
+
+            virtual void onMouseUnselected(const sf::Vector2f& pos)
+            {
+                for (auto component : m_components)
+                {
+                    if (component != nullptr)
+                        component->onMouseUnselected(pos);
                 }
             }
 

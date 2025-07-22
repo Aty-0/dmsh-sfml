@@ -17,10 +17,19 @@ namespace dmsh::game
                 
             }
 
+            virtual void onMouseUnselected(const sf::Vector2f& pos) override;
             virtual void onMouseSelected(const sf::Vector2f& pos) override;
         private:
+            void onIsSelectedChanged();
+
             friend class NodeEditor; 
             NodeEditor* m_nodeEditor;
+            
             bool m_isSelected;
+            bool m_useSpline;
+            bool m_isFirstNode;
+            bool m_isEndNode;
+            
+            // TODO: onReachAction, when enemy is reached node we need do something  
     };
 }

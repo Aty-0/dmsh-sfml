@@ -16,6 +16,6 @@ namespace dmsh::core
         m_renderWindow.setMouseCursorVisible(true);
         m_renderWindow.setKeyRepeatEnabled(false);
 		//m_renderWindow.setVerticalSyncEnabled(true);
-		m_renderWindow.setFramerateLimit(60);
+		//m_renderWindow.setFramerateLimit(60);
     }
 }

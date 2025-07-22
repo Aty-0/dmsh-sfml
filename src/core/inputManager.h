@@ -1,5 +1,7 @@
 #pragma once
 #include "common.h"
+#include "inputString.h"
+
 #include <functional>
 #include <map>
 
@@ -12,6 +14,7 @@ namespace dmsh::core
         KeyHold,
         Wheel,
         MouseMoved,
+        Unknown = -1,  
     };
     
     using KeyCode = sf::Keyboard::Key;
@@ -24,7 +27,8 @@ namespace dmsh::core
         {
             Mouse,
             Keyboard,
-            Joystick  
+            Joystick,
+            Unknown = -1,  
         };
 
         struct Listener 
@@ -57,7 +61,58 @@ namespace dmsh::core
             
             bool isKeyDown(const KeyCode& key) const;
             bool isKeyReleased(const KeyCode& key) const;
-              
+
+            inline std::string toString() const
+            {
+                std::stringstream stream;
+                static const auto getStateName = [](const InputListenerType& type)
+                {
+                    switch (type)
+                    {                  
+                    case InputListenerType::KeyPressed:
+                        return "KeyPressed";
+                    case InputListenerType::KeyReleased:
+                        return "KeyReleased";
+                    case InputListenerType::KeyHold:
+                        return "KeyHold";
+                    case InputListenerType::MouseMoved:
+                        return "MouseMoved";
+                    case InputListenerType::Wheel:
+                        return "Wheel";
+                    default:
+                        return "Unknown";
+                    }
+                };
+
+                for (const auto& [key, listener] : m_listeners)
+                {
+                    switch (listener.device)
+                    {
+                        case InputDevice::Keyboard:
+                            stream << key << " | Keyboard | Key: " << 
+                                (listener.keyCode == KeyCode::Unknown ? "Unknown" : keyString[static_cast<std::int32_t>(listener.keyCode)]) <<
+                                " | Type:" << getStateName(listener.type) <<
+                                "\n";
+                            break;
+                        case InputDevice::Mouse:
+                            stream << key << " | Mouse | Button: " <<
+                                mouseString[static_cast<std::int32_t>(listener.mouseButton)] <<
+                                " | Type:" << getStateName(listener.type) <<
+                                "\n";
+                            break;
+                        case InputDevice::Joystick:
+                            stream << key << " | Joystick | Not implemented " << 
+                            "\n";
+                            break;
+                        default:
+                            stream << key << " | Unknown Device | " << 
+                            "\n";
+                            break;
+                    }
+                } 
+
+                return stream.str();
+            }
         private:
             std::map<std::string, InputManager::Listener> m_listeners;
     };

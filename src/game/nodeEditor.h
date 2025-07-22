@@ -4,6 +4,8 @@
 #include "../core/inputManager.h"
 #include "../core/debug.h"
 #include "../core/window.h"
+#include "../core/text.h"
+
 
 #include "enemyNode.h"
 #include <vector>
@@ -18,9 +20,6 @@ namespace dmsh::game
             {
                 const auto inputManager = core::InputManager::getInstance();
 
-                inputManager->addListener("editor_switch_edit_mode", core::InputListenerType::KeyPressed, core::KeyCode::Z, [this]() {
-                    m_onEditMode = !m_onEditMode;
-                });
                 
                 inputManager->addListener("editor_move_node", core::InputListenerType::KeyHold, core::MouseButtons::Left, [this]() {        
                     if (!m_selected)
@@ -34,7 +33,32 @@ namespace dmsh::game
                         m_selected->getOwner()->getTransform().setPosition(worldCoords);
                     }
                 });
+                
+                const auto sceneManager = core::SceneManager::getInstance();
 
+                auto selectedObjectTextGo = sceneManager->createGameObject<core::GameObject>();        
+                m_selectedObjectTextComp = selectedObjectTextGo->createComponent<core::Text>();
+                m_selectedObjectTextComp->setFillColor(DEFAULT_TEXT_COLOR);
+                m_selectedObjectTextComp->setSize(16);
+    
+                auto selectedObjectTextTransform = selectedObjectTextGo->getTransform();
+                selectedObjectTextTransform.setPosition({0, 100});
+                
+                auto editModeTextGo = sceneManager->createGameObject<core::GameObject>();        
+                auto editModeObjectTextComp = editModeTextGo->createComponent<core::Text>();
+                editModeObjectTextComp->setFillColor(DEFAULT_TEXT_COLOR);
+                editModeObjectTextComp->setSize(16);
+                editModeObjectTextComp->setText(m_onEditMode ? "edit mode" : "creation mode");
+                
+                auto editModeTextTransform = editModeTextGo->getTransform();
+                editModeTextTransform.setPosition({0, 150});                
+
+                inputManager->addListener("editor_switch_edit_mode", core::InputListenerType::KeyPressed, core::KeyCode::Z, [this, editModeObjectTextComp]() {
+                    m_onEditMode = !m_onEditMode;
+                    editModeObjectTextComp->setText(m_onEditMode ? "edit mode" : "creation mode");
+                });
+                
+                updateSelectedText();
             }   
             
             virtual void onRender(sf::RenderWindow& window) override
@@ -93,10 +117,36 @@ namespace dmsh::game
 
             inline bool isOnEditMode() const { return m_onEditMode; }
             inline std::shared_ptr<EnemyNode> getSelected() const { return m_selected; }
-            inline void setSelected(std::shared_ptr<EnemyNode> node) { m_selected = node; }
+            
+            inline void setSelected(std::shared_ptr<EnemyNode> node) 
+            {
+                m_selected = node;
+                updateSelectedText();
+            }
+
         private:
+            inline void updateSelectedText()
+            {
+                if (m_selected == nullptr)
+                {
+                    m_selectedObjectTextComp->setText("Selected:None");
+                }
+                else
+                {
+                    const auto index = static_cast<std::size_t>(std::find(m_nodes.begin(), m_nodes.end(), m_selected) - m_nodes.begin());
+                    const auto transform = m_selected->getOwner()->getTransform();
+                    const auto pos = transform.getPosition();
+                                     
+                    m_selectedObjectTextComp->setText("Selected:{}\nPos [x:{} y:{}]", index, pos.x, pos.y);
+                }
+            }
+
             std::shared_ptr<EnemyNode> m_selected;
             std::vector<std::shared_ptr<EnemyNode>> m_nodes;
             bool m_onEditMode;
+
+            std::shared_ptr<core::Text> m_selectedObjectTextComp;
+            
+            const sf::Color DEFAULT_TEXT_COLOR = sf::Color(255, 255, 255, 150);
     };
 }

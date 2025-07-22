@@ -21,11 +21,11 @@ namespace dmsh::game
                 shape.setFillColor(sf::Color::White);
                 const auto inputManager = core::InputManager::getInstance();
     
-                inputManager->addListener("player_move_right", core::InputListenerType::KeyHold, core::KeyCode::Right, [this]() {
+                inputManager->addListener("player_move_left", core::InputListenerType::KeyHold, core::KeyCode::Left, [this]() {
                     m_move.x = -1;
                 });
     
-                inputManager->addListener("player_move_left", core::InputListenerType::KeyHold, core::KeyCode::Left, [this]() {
+                inputManager->addListener("player_move_right", core::InputListenerType::KeyHold, core::KeyCode::Right, [this]() {
                     m_move.x = 1;
                 });
     
@@ -41,6 +41,16 @@ namespace dmsh::game
                 collider->setRect(sf::FloatRect { { 0.0f, 0.0f }, { 30.0f, 50.0f } });      
                 
                 setTag("player");
+            }
+
+            virtual void onDestroy() override
+            {
+                const auto inputManager = core::InputManager::getInstance();
+                
+                inputManager->removeListener("player_move_left");
+                inputManager->removeListener("player_move_right");
+                inputManager->removeListener("player_move_forward");
+                inputManager->removeListener("player_move_backward");
             }
 
             virtual void onUpdate(float delta) override

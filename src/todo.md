@@ -1,5 +1,32 @@
 # Todo list
 
+# to the far future 
+- [ ] save patterns
+- [ ] implement enemy movement
+- [ ] buttons, window
+- [ ] add onInputUpdate for game objects and components 
+    - [ ] add isListenerActive(name)
+    That method is more correct and convenient than we are have now 
+ 
+## 22/07/2025
+- [ ] add splines for patterns
+- [ ] implement pattern class 
+    - [ ] add vector of patterns in editor 
+    - [ ] we can change patterns 
+- [ ] investigate about sf::config  
+
+## 21/07/2025
+- [x] onMouseUnselect 
+- [-] proper names for (onMouseSelect | onMouseUnselect)  
+- [x] improve editor ui a bit 
+    - [x] transperency, change position 
+- [x] (collsion bug) if something already colliding with object, that's cause that other objects is not triggering enter callback
+        - [x] fixed same bug but for mouse 
+        - [x] remove collider tracker for mouse, because it's too complicated for mouse 
+        - I think, to we need to store collided object in collider to fix this bug
+
+
+
 ## Game engine 
 - [x] z depth
 - [x] mouse picking
@@ -12,23 +39,26 @@
 - [ ] (game object) name, uuid 
 - [ ] (components) name, uuid 
 - [ ] easy transform animations (like in osu!)
-- [ ] camera 
+- [ ] camera
+- [ ] improve-rewrite logger 
+    - [ ] save logs 
+    - [ ] use std::format    
 - [ ] colliders 
     - [x] callback on collision 
     - [ ] push objects on collision if it's dynamic 
-    - [ ] (collsion bug) if something already colliding with object, that's cause that other objects is not triggering enter callback
-        - I think, to we need to store collided object in collider to fix this bug
 
 - [ ] input
     - [x] listener logic
     - [x] support for keyboard 
     - [x] support for mouse 
     - [ ] support for joystick
-    - [x] add hold key 
+    - [x] add hold key
+    
+
     - [ ] isKeyDown, isKeyReleased for input
 - [ ] ui
-    - [ ] text 
-        - [ ] also will be nice add std::format for setting text 
+    - [x] text 
+        - [x] also will be nice add std::format for setting text 
     - [ ] button 
     - [ ] square  
 - [ ] scene / game objects

@@ -25,6 +25,7 @@ namespace dmsh::core
             virtual void onDestroy() {} 
             virtual void onRender(sf::RenderWindow& window) {} 
             virtual void onUpdate(float delta) {}
+            virtual void onMouseUnselected(const sf::Vector2f& pos) {}
             virtual void onMouseSelected(const sf::Vector2f& pos) {}
             virtual void onMouseClicked(const sf::Vector2f& pos) {}
             virtual void onCollisionExit(const Collider& collider) {}

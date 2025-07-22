@@ -4,6 +4,7 @@
 #include "time.h"
 #include "sceneManager.h"
 #include "inputManager.h"
+#include "text.h"
 
 #include "../game/player.h"
 #include "../game/nodeEditor.h"
@@ -15,9 +16,12 @@ namespace dmsh::core
     static const auto inputManager = InputManager::getInstance(); 
     static const auto time = Time::getInstance();
     
-    static sf::Text* testTextDrawable;
-    static sf::Text* sceneDebugTextDrawable;
-
+    // TODO: Relocate to stats class 
+    static std::shared_ptr<Text> sceneDebugTextComp;
+    static std::shared_ptr<Text> fpsDebugTextComp;
+    
+    static std::shared_ptr<Text> inputDebugTextComp;
+    
     void Game::run()
     {
         const auto window = Window::getInstance();
@@ -28,14 +32,28 @@ namespace dmsh::core
         Scene scene = { };
         sceneManager->set(scene);
         {            
-            static sf::Font defaultFont("immortal.ttf");    
-
             auto sceneDebugText = sceneManager->createGameObject<GameObject>();
-            sceneDebugText->setZDepth(core::zDepth::UI_LAYER);
+            
+            sceneDebugTextComp = sceneDebugText->createComponent<Text>();
+            sceneDebugTextComp->setFillColor(sf::Color::Yellow);
+            sceneDebugTextComp->setSize(16);
+
             auto sceneDebugTextTransform = sceneDebugText->getTransform();
-            sceneDebugTextTransform.setPosition({500, 100});
-            sceneDebugTextDrawable = &sceneDebugText->getDrawable().createDrawable<sf::Text>(defaultFont);
-            sceneDebugTextDrawable->setFillColor(sf::Color::Yellow);
+            sceneDebugTextTransform.setPosition({100, 100});
+
+            auto fpsDebugText = sceneManager->createGameObject<GameObject>();            
+            fpsDebugTextComp = fpsDebugText->createComponent<Text>();
+            fpsDebugTextComp->setFillColor(sf::Color::Yellow);
+            fpsDebugTextComp->setSize(18);
+
+            
+            auto inputDebugText = sceneManager->createGameObject<GameObject>();            
+            inputDebugTextComp = inputDebugText->createComponent<Text>();
+            inputDebugTextComp->setFillColor(sf::Color::Yellow);
+            inputDebugTextComp->setSize(14);
+
+            auto inputDebugTextTransform = inputDebugText->getTransform();
+            inputDebugTextTransform.setPosition({500, 100});
             
             auto nodeEditor = sceneManager->createGameObject<GameObject>();
             nodeEditor->createComponent<game::NodeEditor>();
@@ -47,7 +65,7 @@ namespace dmsh::core
                 auto npc = sceneManager->createGameObject<GameObject>();
                 auto& transform = npc->getTransform();
                 npc->createComponent<game::Enemy>();
-                transform.setPosition({transform.getPosition().x + (i * 50), transform.getPosition().y + (i * 10)});
+                transform.setPosition({transform.getPosition().x + (i * 5), transform.getPosition().y + (i * 10)});
             }
       
         }
@@ -79,7 +97,9 @@ namespace dmsh::core
         inputManager->update();
         sceneManager->onUpdate(delta);
 
-        sceneDebugTextDrawable->setString(sceneManager->toString());
+        fpsDebugTextComp->setText("fps:{}\ndelta:{}", time->getFps(), delta);
+        inputDebugTextComp->setText(inputManager->toString());
+        sceneDebugTextComp->setText(sceneManager->toString());
     }
     
     void Game::poolEvents(sf::RenderWindow& window)

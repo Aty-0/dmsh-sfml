@@ -4,12 +4,10 @@
 #include <unordered_set>
 
 namespace dmsh::core
-{
-    static std::unordered_set<GameObject*> collisionDetectedPrevFrame;
-    
+{    
     SceneManager::~SceneManager()
     {
-        collisionDetectedPrevFrame.clear();
+        //collisionDetectedPrevFrame.clear();
         
         m_scene.GameObjects.clear();
         m_scene.GameObjects.shrink_to_fit();
@@ -20,6 +18,9 @@ namespace dmsh::core
         static const auto gameWindow = core::Window::getInstance();
         const auto mousePos = gameWindow->getMousePosition();
         const auto worldCoords = window.mapPixelToCoords(mousePos);
+        
+        static Collider* collidedInPrevFrame = nullptr;;
+        Collider* collided = nullptr;
         for (std::size_t i = 0; i < m_scene.GameObjects.size(); ++i) 
         {               
             auto& weak = m_scene.GameObjects[i];
@@ -34,8 +35,20 @@ namespace dmsh::core
                 continue;
 
             if (collider->contains(worldCoords))
-                go->onMouseSelected(worldCoords);            
+            {
+                go->onMouseSelected(worldCoords);
+
+                if (collidedInPrevFrame != collider.get())
+                    collided = collider.get();
+            }
+
+            if (collided != collider.get()) 
+            {
+                go->onMouseUnselected(worldCoords);
+            }
         }
+
+        collidedInPrevFrame = collided;
     }
 
     void SceneManager::set(const Scene& scene)
@@ -56,8 +69,6 @@ namespace dmsh::core
     
     void SceneManager::onUpdate(float delta)
     {
-        std::unordered_set<GameObject*> collisionDetected;
-
         for (std::size_t i = 0; i < m_scene.GameObjects.size(); ++i)         
         {
             auto& weak = m_scene.GameObjects[i];
@@ -70,6 +81,8 @@ namespace dmsh::core
             auto collider = go->getComponent<Collider>();
             if (!collider)
                 continue;
+            
+            collider->m_collisionTracker.Collided.clear();            
 
             for (std::size_t j = 0; j < m_scene.GameObjects.size(); ++j)         
             {
@@ -86,7 +99,7 @@ namespace dmsh::core
                 {
                     // Try to find a game object pointer on a prev frame, if we are not found a go, 
                     // then we are invoke a start callback
-                    if (collisionDetectedPrevFrame.count(go.get()) == 0)
+                    if (!collider->m_collisionTracker.isObjectCollidedPrevFrame(otherCollider.get()))
                     {
                         DMSH_DEBUG("it's a on collision enter callback");
                         go->onCollisionEnter(*otherCollider);
@@ -94,25 +107,34 @@ namespace dmsh::core
 
                     // Invoke a stay collision callback
                     go->onCollisionStay(*otherCollider);
-                    collisionDetected.insert(go.get());
+                    collider->m_collisionTracker.Collided.insert(otherCollider.get());
                 }                                                            
             }
         }
         
+        for (std::size_t i = 0; i < m_scene.GameObjects.size(); ++i)         
+        {          
+            auto& weak = m_scene.GameObjects[i];
+            auto go = weak.lock();
+            if (!go)
+                continue;
 
-        for (auto other : collisionDetectedPrevFrame) 
-        {
-            if (collisionDetected.count(other) == 0) 
+            auto collider = go->getComponent<Collider>();
+            if (!collider)
+                continue;
+
+            for (auto other : collider->m_collisionTracker.CollidedInPrevFrame) 
             {
-                // TODO: other->getCollider() it's a wrong I think
-                DMSH_DEBUG("it's a on collision exit callback");
-                auto collider = other->getComponent<Collider>();
-                if (!collider)
+                if (!collider->m_collisionTracker.isObjectCollided(other)) 
+                {
+                    // TODO: other->getCollider() it's a wrong I think
+                    DMSH_DEBUG("it's a on collision exit callback");
                     other->onCollisionExit(*collider);
+                }
             }
+    
+            collider->m_collisionTracker.CollidedInPrevFrame = collider->m_collisionTracker.Collided;
         }
-
-        collisionDetectedPrevFrame = collisionDetected;
     }
 
     void SceneManager::rebuildZOrdering()
