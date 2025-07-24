@@ -26,7 +26,7 @@ namespace dmsh::core
                 auto owner = getOwner();
                 owner->setZDepth(zDepth::UI_LAYER, true);
 
-                m_drawableText = &owner->getDrawable().createDrawable<sf::Text>(defaultFont);            
+                m_drawableText = &owner->getDrawable().create<sf::Text>(defaultFont);            
             }
             
             inline std::string getText() const 

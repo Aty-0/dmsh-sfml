@@ -17,7 +17,7 @@ namespace dmsh::core
         }
         
         template<typename T, typename... Args>
-        inline T& createDrawable(Args&&... args)
+        inline T& create(Args&&... args)
         {
             // TODO: Remove prev drawable, transform
             static_assert(!std::is_base_of<T, sf::Drawable>::value && !std::is_base_of<T, sf::Transformable>::value, "Not a drawable based class");
@@ -52,7 +52,7 @@ namespace dmsh::core
         }
         
         template<typename T>
-        inline std::shared_ptr<T> getDrawable() const 
+        inline std::shared_ptr<T> get() const 
         {
             static_assert(!std::is_base_of<T, sf::Drawable>::value, "Not a drawable based class");
             if (m_drawable == nullptr)

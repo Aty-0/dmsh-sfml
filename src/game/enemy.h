@@ -21,7 +21,7 @@ namespace dmsh::game
             {
                 auto owner = getOwner();
     
-                auto& shape = owner->getDrawable().createDrawable<sf::RectangleShape>();
+                auto& shape = owner->getDrawable().create<sf::RectangleShape>();
                 shape.setSize({30, 50});
                 shape.setFillColor(sf::Color::White);
                 

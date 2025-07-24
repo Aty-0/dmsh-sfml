@@ -188,7 +188,7 @@ namespace dmsh::game
         constexpr sf::Vector2f size = { 30.0f, 30.0f };
         collider->setRect(sf::FloatRect { { 0.0f, 0.0f }, size });
         
-        auto& goDrawable = go->getDrawable().createDrawable<sf::RectangleShape>();
+        auto& goDrawable = go->getDrawable().create<sf::RectangleShape>();
         goDrawable.setSize(size);
         goDrawable.setFillColor(sf::Color::White);
         auto& transform = go->getTransform();

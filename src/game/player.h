@@ -16,7 +16,7 @@ namespace dmsh::game
             virtual void onStart() override 
             {
                 getTransform().setPosition({500, 500});
-                auto& shape = getDrawable().createDrawable<sf::RectangleShape>();
+                auto& shape = getDrawable().create<sf::RectangleShape>();
                 shape.setSize({30, 50});
                 shape.setFillColor(sf::Color::White);
                 const auto inputManager = core::InputManager::getInstance();

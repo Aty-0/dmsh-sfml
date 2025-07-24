@@ -24,7 +24,7 @@ namespace dmsh::game
     void EnemyNode::onIsSelectedChanged()
     {
         auto shared = shared_from_this();
-        const auto drawable = getOwner()->getDrawable().getDrawable<sf::RectangleShape>();
+        const auto drawable = getOwner()->getDrawable().get<sf::RectangleShape>();
         const static auto coroutineScheduler = core::coroutines::CoroutineScheduler::getInstance();
         if (m_isSelected)
         {

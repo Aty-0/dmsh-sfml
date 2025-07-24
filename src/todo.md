@@ -34,10 +34,10 @@
 - [x] mouse picking
 - [x] tags
 - [x] debug draw
-- [ ] rename getDrawable in Drawable it's weird
+- [x] rename getDrawable in Drawable it's weird
 - [ ] mouse hover
 - [ ] ray trace
-- [ ] (game object) visible variable 
+- [x] (game object) visible variable 
 - [ ] (game object) name, uuid 
 - [ ] (components) name, uuid 
 - [ ] easy transform animations (like in osu!)
@@ -55,8 +55,6 @@
     - [x] support for mouse 
     - [ ] support for joystick
     - [x] add hold key
-    
-
     - [ ] isKeyDown, isKeyReleased for input
 - [ ] ui
     - [x] text 
@@ -67,7 +65,7 @@
     - [ ] create go, delete go
         - [x] create
         - [ ] add
-        - [ ] delete 
+        - [x] delete 
     - [ ] add for game objects uuid and name
 - [ ] basic editor 
     - [ ] scene inspector
