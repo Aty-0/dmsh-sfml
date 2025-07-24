@@ -26,6 +26,8 @@ namespace dmsh::game
             core::coroutines::Coroutine popupAnimation();
             core::coroutines::Coroutine popoutAnimation();
 
+            std::shared_ptr<core::coroutines::Coroutine> m_animationCoroutine;
+            
             friend class NodeEditor; 
             NodeEditor* m_nodeEditor;
             

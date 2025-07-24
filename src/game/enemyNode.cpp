@@ -26,18 +26,21 @@ namespace dmsh::game
         auto shared = shared_from_this();
         const auto drawable = getOwner()->getDrawable().get<sf::RectangleShape>();
         const static auto coroutineScheduler = core::coroutines::CoroutineScheduler::getInstance();
+        
+        coroutineScheduler->stop(m_animationCoroutine);
+        
         if (m_isSelected)
         {
             drawable->setFillColor(sf::Color::Red);        
             m_nodeEditor->setSelected(shared); 
             
-            coroutineScheduler->run(std::bind(&EnemyNode::popupAnimation, this));
+            m_animationCoroutine = coroutineScheduler->run(std::bind(&EnemyNode::popupAnimation, this));
         }
         else
         {
             drawable->setFillColor(sf::Color::White);        
             m_nodeEditor->setSelected(nullptr);             
-            coroutineScheduler->run(std::bind(&EnemyNode::popoutAnimation, this));
+            m_animationCoroutine = coroutineScheduler->run(std::bind(&EnemyNode::popoutAnimation, this));
         }
     }
     

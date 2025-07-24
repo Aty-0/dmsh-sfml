@@ -4,7 +4,7 @@
 #include <chrono>
 #include <functional>
 #include <memory>
-#include <unordered_set>
+#include <unordered_map>
 
 #include "logger.h"
 #include "singleton.h"
@@ -91,20 +91,21 @@ namespace dmsh::core::coroutines
                 return !is_done() && now >= handle.promise().resume_time;
             }
 
-        private:
+        private:            
             std::coroutine_handle<Promise> handle;
     };
-
+    
     class CoroutineScheduler : public Singleton<CoroutineScheduler>
     {
         public:
             using CoroutineFunction = std::function<Coroutine()>;
-
+            
             void update();
-            void run(CoroutineFunction coroutine);
+            std::shared_ptr<Coroutine> run(CoroutineFunction coroutineFunction);
+            void stop(std::shared_ptr<Coroutine> coroutinePtr);
 
         private:
-            std::unordered_set<std::shared_ptr<Coroutine>> m_coroutines;
+            std::unordered_map<std::size_t, std::shared_ptr<Coroutine>> m_coroutines;
     };
 
     inline void CoroutineScheduler::update()
@@ -114,14 +115,14 @@ namespace dmsh::core::coroutines
 
         while(it != m_coroutines.end())
         {
-            if((*it)->is_done())       
+            if(it->second->is_done())       
             {
                 //DMSH_DEBUG("is done, remove coroutine...");
                 it = m_coroutines.erase(it);                            
             }     
-            else if ((*it)->should_resume(clock))
+            else if (it->second->should_resume(clock))
             {
-                (*it)->resume();
+                it->second->resume();
                 ++it;
             }            
             else 
@@ -131,9 +132,45 @@ namespace dmsh::core::coroutines
         }
     }
 
-    inline void CoroutineScheduler::run(CoroutineFunction coroutine)
+    inline void CoroutineScheduler::stop(std::shared_ptr<Coroutine> coroutinePtr)
     {
-        m_coroutines.insert(std::make_shared<Coroutine>(coroutine()));
+        if (coroutinePtr == nullptr)
+        {            
+            return;
+        }
+        
+        auto find = std::find_if(m_coroutines.begin(), m_coroutines.end(), [coroutinePtr](auto it) {
+            return it.second == coroutinePtr;
+        });
+
+        if (find == m_coroutines.end())
+        {
+            DMSH_ERROR("can't find coroutine in map");
+            return;
+        }
+
+        m_coroutines.erase(find);
+        coroutinePtr = nullptr;
+    }
+
+    inline std::shared_ptr<Coroutine> CoroutineScheduler::run(CoroutineFunction coroutineFunction)
+    {
+        auto hashCode = coroutineFunction.target_type().hash_code();
+
+        // Don't start a existing coroutine if it's not done 
+        if (m_coroutines.find(hashCode) != m_coroutines.end())
+        {
+            auto findedCoroutine = m_coroutines[hashCode];
+            if (!findedCoroutine->is_done())
+            {
+                DMSH_DEBUG("too bad, it's not done %s", coroutineFunction.target_type().name());
+                return findedCoroutine; 
+            }
+        }
+
+        auto coroutineShared = std::make_shared<Coroutine>(coroutineFunction());
+        m_coroutines.insert({ hashCode, coroutineShared });
+        return coroutineShared;
     } 
 
     struct Continue

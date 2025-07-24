@@ -1,9 +1,6 @@
 #pragma once 
 #include "../core/sceneManager.h"
 #include "../core/component.h"
-#include "../core/inputManager.h"
-#include "../core/debug.h"
-#include "../core/window.h"
 #include "../core/text.h"
 
 

@@ -1,4 +1,7 @@
 #include "nodeEditor.h"
+#include "../core/inputManager.h"
+#include "../core/debug.h"
+#include "../core/window.h"
 
 namespace dmsh::game
 {
@@ -11,10 +14,12 @@ namespace dmsh::game
         inputManager->addListener("editor_switch_pattern_back", core::InputListenerType::KeyPressed, core::KeyCode::R);
         inputManager->addListener("editor_delete_node", core::InputListenerType::KeyPressed, core::KeyCode::Delete);
         inputManager->addListener("editor_create_node", core::InputListenerType::KeyPressed, core::KeyCode::L);
+        inputManager->addListener("editor_test", core::InputListenerType::KeyHold, core::KeyCode::H);
 
         createUI();        
         updateSelectedText();
-        updatePatternText();
+        
+        createNewPattern();
     }
 
     void NodeEditor::createUI()
@@ -117,6 +122,11 @@ namespace dmsh::game
 
     void NodeEditor::onInput(core::InputManager& input) 
     {
+        if (input.isListenerActive("editor_test"))
+        {
+            DMSH_DEBUG("test");
+        }
+
         if (input.isListenerActive("editor_delete_node"))
         {
             if (m_selected)

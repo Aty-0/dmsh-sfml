@@ -66,8 +66,9 @@ namespace dmsh::core
             auto nodeEditor = sceneManager->createGameObject<GameObject>();
             nodeEditor->createComponent<game::NodeEditor>();
 
-            auto player = sceneManager->createGameObject<game::Player>();
-
+            auto playerGo = sceneManager->createGameObject<GameObject>();
+            playerGo->createComponent<game::Player>();
+            
             for (std::int32_t i = 0; i < 15; i++)
             {
                 auto npc = sceneManager->createGameObject<GameObject>();
@@ -97,6 +98,7 @@ namespace dmsh::core
         while (window->isOpen())
         {
             poolEvents(sfWindow);
+            sceneManager->onInput(*inputManager);
             onUpdate(time->getDelta());
             onRender(sfWindow);
         }
@@ -105,7 +107,7 @@ namespace dmsh::core
     void Game::onRender(sf::RenderWindow& window)
     {
         window.clear();
-        sceneManager->onRender(window);
+        sceneManager->onRender(window);        
         window.display();
     }
     
@@ -139,7 +141,6 @@ namespace dmsh::core
             }
 
             inputManager->process(pureEvent);
-            sceneManager->onInput(*inputManager);
         }
     }
 

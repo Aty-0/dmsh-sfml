@@ -89,14 +89,19 @@ namespace dmsh::core
         auto listener = m_listeners.find(name);
         if (listener == m_listeners.end())
             return false;
-
-        const bool result = listener->second.stayActive || listener->second.isActive;
-        if (result && !listener->second.stayActive) 
+        
+        if (listener->second.stayActive) 
         {
-            listener->second.isActive = false;
+            return true; 
         }
 
-        return result;
+        if (listener->second.isActive) 
+        {
+            listener->second.isActive = false;
+            return true;
+        }
+        
+        return false;
     }
 
     bool InputManager::isKeyDown(const KeyCode& key) const
