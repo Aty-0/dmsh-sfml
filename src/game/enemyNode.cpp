@@ -1,6 +1,8 @@
 #include "enemyNode.h"
 #include "nodeEditor.h"
 
+#include "../core/time.h"
+
 namespace dmsh::game
 {
     void EnemyNode::onMouseUnselected(const sf::Vector2f& pos)
@@ -23,15 +25,63 @@ namespace dmsh::game
     {
         auto shared = shared_from_this();
         const auto drawable = getOwner()->getDrawable().getDrawable<sf::RectangleShape>();
-        drawable->setFillColor(m_isSelected ? sf::Color::Red : sf::Color::White);        
-        m_nodeEditor->setSelected(m_isSelected ? shared : nullptr); 
+        const static auto coroutineScheduler = core::coroutines::CoroutineScheduler::getInstance();
+        if (m_isSelected)
+        {
+            drawable->setFillColor(sf::Color::Red);        
+            m_nodeEditor->setSelected(shared); 
+            
+            coroutineScheduler->run(std::bind(&EnemyNode::popupAnimation, this));
+        }
+        else
+        {
+            drawable->setFillColor(sf::Color::White);        
+            m_nodeEditor->setSelected(nullptr);             
+            coroutineScheduler->run(std::bind(&EnemyNode::popoutAnimation, this));
+        }
+    }
+    
+    static constexpr float MaxNodeSize = 1.3f;
+    static constexpr float SpeedPop = 10.0f;
+
+    core::coroutines::Coroutine EnemyNode::popoutAnimation()
+    {
+        const auto owner = getOwner();
+        auto& transform = owner->getTransform();
+        auto scale = transform.getScale();
+        static const auto time = core::Time::getInstance();
+
+        float s = MaxNodeSize;
+        while (s > 1.0f)
+        {
+            s -= SpeedPop * time->getDelta();
+            transform.setScale({s, s});
+
+            co_await core::coroutines::Continue();
+        }
     }
 
+    core::coroutines::Coroutine EnemyNode::popupAnimation()
+    {
+        const auto owner = getOwner();
+        auto& transform = owner->getTransform();
+        static const auto time = core::Time::getInstance();
+        float s = 1.0f;
+        while (s < MaxNodeSize)
+        {
+            s += SpeedPop * time->getDelta();
+            transform.setScale({s, s});
+
+            co_await core::coroutines::Continue();
+        }
+    }
+
+            
     void EnemyNode::onMouseSelected(const sf::Vector2f& pos)
     {
         if (!m_nodeEditor->isOnEditMode())
             return;
-            
+        
         const auto selected = m_nodeEditor->getSelected();
         const auto shared = shared_from_this();
         
@@ -42,7 +92,7 @@ namespace dmsh::game
             selected->m_isSelected = false;
             selected->onIsSelectedChanged();
         }
-        
+
         DMSH_DEBUG("select");
         m_isSelected = true;        
         onIsSelectedChanged();

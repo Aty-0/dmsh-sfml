@@ -5,6 +5,7 @@
 #include "sceneManager.h"
 #include "inputManager.h"
 #include "text.h"
+#include "coroutine.h"
 
 #include "../game/player.h"
 #include "../game/nodeEditor.h"
@@ -14,12 +15,19 @@ namespace dmsh::core
 {
     static const auto sceneManager = SceneManager::getInstance(); 
     static const auto inputManager = InputManager::getInstance(); 
+    static const auto coroutineScheduler = coroutines::CoroutineScheduler::getInstance(); 
+
     static const auto time = Time::getInstance();
     
     // TODO: Relocate to stats class 
-    static std::shared_ptr<Text> sceneDebugTextComp;
-    static std::shared_ptr<Text> fpsDebugTextComp;
+    static bool showDebugInfo = false;
     
+    static std::shared_ptr<GameObject> sceneDebugText;
+    static std::shared_ptr<GameObject> fpsDebugText;    
+    static std::shared_ptr<GameObject> inputDebugText;
+
+    static std::shared_ptr<Text> sceneDebugTextComp;
+    static std::shared_ptr<Text> fpsDebugTextComp;    
     static std::shared_ptr<Text> inputDebugTextComp;
     
     void Game::run()
@@ -32,7 +40,7 @@ namespace dmsh::core
         Scene scene = { };
         sceneManager->set(scene);
         {            
-            auto sceneDebugText = sceneManager->createGameObject<GameObject>();
+            sceneDebugText = sceneManager->createGameObject<GameObject>();
             
             sceneDebugTextComp = sceneDebugText->createComponent<Text>();
             sceneDebugTextComp->setFillColor(sf::Color::Yellow);
@@ -41,13 +49,13 @@ namespace dmsh::core
             auto sceneDebugTextTransform = sceneDebugText->getTransform();
             sceneDebugTextTransform.setPosition({100, 100});
 
-            auto fpsDebugText = sceneManager->createGameObject<GameObject>();            
+            fpsDebugText = sceneManager->createGameObject<GameObject>();            
             fpsDebugTextComp = fpsDebugText->createComponent<Text>();
             fpsDebugTextComp->setFillColor(sf::Color::Yellow);
             fpsDebugTextComp->setSize(18);
 
             
-            auto inputDebugText = sceneManager->createGameObject<GameObject>();            
+            inputDebugText = sceneManager->createGameObject<GameObject>();            
             inputDebugTextComp = inputDebugText->createComponent<Text>();
             inputDebugTextComp->setFillColor(sf::Color::Yellow);
             inputDebugTextComp->setSize(14);
@@ -71,8 +79,17 @@ namespace dmsh::core
         }
 
         sceneManager->rebuildZOrdering();
-        
-        // Add listener for mouse select for game objects
+
+        // Add listener for debug switcher
+        inputManager->addListener("engine_debug_info_switch", core::InputListenerType::KeyPressed, core::KeyCode::F10, [&]() {
+            showDebugInfo = !showDebugInfo;
+
+            inputDebugText->setVisible(showDebugInfo);
+            fpsDebugText->setVisible(showDebugInfo);
+            sceneDebugText->setVisible(showDebugInfo);
+        });
+
+        // Add listener for mouse select event for all game objects
         inputManager->addListener("engine_scene_on_mouse_clicked", core::InputListenerType::KeyPressed, core::MouseButtons::Left, [&]() {
             sceneManager->onMouseClicked(sfWindow);
         });
@@ -96,10 +113,14 @@ namespace dmsh::core
     {
         inputManager->update();
         sceneManager->onUpdate(delta);
-
-        fpsDebugTextComp->setText("fps:{}\ndelta:{}", time->getFps(), delta);
-        inputDebugTextComp->setText(inputManager->toString());
-        sceneDebugTextComp->setText(sceneManager->toString());
+        coroutineScheduler->update();
+        
+        if (showDebugInfo)
+        {
+            fpsDebugTextComp->setText("fps:{}\ndelta:{}", time->getFps(), delta);
+            inputDebugTextComp->setText(inputManager->toString());
+            sceneDebugTextComp->setText(sceneManager->toString());
+        }
     }
     
     void Game::poolEvents(sf::RenderWindow& window)
@@ -118,6 +139,7 @@ namespace dmsh::core
             }
 
             inputManager->process(pureEvent);
+            sceneManager->onInput(*inputManager);
         }
     }
 

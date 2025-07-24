@@ -12,15 +12,19 @@ namespace dmsh::core
         std::vector<std::weak_ptr<GameObject>> GameObjects;
     };
 
+    class InputManager;
     class SceneManager : public Singleton<SceneManager>
     {
         public:
             SceneManager() { }
             ~SceneManager(); 
-            void set(const Scene& scene);
+            
+            void onInput(InputManager& input);
             void onMouseClicked(sf::RenderWindow& window);
             void onRender(sf::RenderWindow& window);
             void onUpdate(float delta);
+
+            void set(const Scene& scene);
             void rebuildZOrdering();
         private:
             Scene m_scene;

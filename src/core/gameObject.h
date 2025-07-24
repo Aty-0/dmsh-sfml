@@ -12,11 +12,16 @@
 
 namespace dmsh::core
 {
+    class InputManager;
     class GameObject : public zDepth, public std::enable_shared_from_this<GameObject>
     {
         public:
-            GameObject() : m_tag("Default"), 
-                m_transform(nullptr), m_drawable(nullptr)
+            GameObject() :
+                m_tag("Default"), 
+                m_transform(nullptr), 
+                m_drawable(nullptr),
+                m_visible(true),
+                m_id(-1)
             {
             }
             
@@ -40,16 +45,26 @@ namespace dmsh::core
                 }
             }
 
+
             virtual void onStart()
             {
                 // Nothing here
+            }
+
+            virtual void onInput(InputManager& input)
+            {
+                for (auto component : m_components)
+                {
+                    if (component != nullptr && m_visible)
+                        component->onInput(input);
+                }
             }
             
             virtual void onRender(sf::RenderWindow& window) 
             {
                 for (auto component : m_components)
                 {
-                    if (component != nullptr)
+                    if (component != nullptr && m_visible)
                         component->onRender(window);
                 }
             }
@@ -58,7 +73,7 @@ namespace dmsh::core
             {
                 for (auto component : m_components)
                 {
-                    if (component != nullptr)
+                    if (component != nullptr && m_visible)
                         component->onUpdate(delta);
                 }
             }
@@ -67,7 +82,7 @@ namespace dmsh::core
             {
                 for (auto component : m_components)
                 {
-                    if (component != nullptr)
+                    if (component != nullptr && m_visible)
                         component->onMouseClicked(pos);
                 }
             }
@@ -76,7 +91,7 @@ namespace dmsh::core
             {
                 for (auto component : m_components)
                 {
-                    if (component != nullptr)
+                    if (component != nullptr && m_visible)
                         component->onMouseUnselected(pos);
                 }
             }
@@ -85,7 +100,7 @@ namespace dmsh::core
             {
                 for (auto component : m_components)
                 {
-                    if (component != nullptr)
+                    if (component != nullptr && m_visible)
                         component->onMouseSelected(pos);
                 }
             }
@@ -94,7 +109,7 @@ namespace dmsh::core
             {
                 for (auto component : m_components)
                 {
-                    if (component != nullptr)
+                    if (component != nullptr && m_visible)
                         component->onCollisionExit(collider);
                 }
             }
@@ -103,7 +118,7 @@ namespace dmsh::core
             {
                 for (auto component : m_components)
                 {
-                    if (component != nullptr)
+                    if (component != nullptr && m_visible)
                         component->onCollisionStay(collider);             
                 }
             } 
@@ -112,7 +127,7 @@ namespace dmsh::core
             {
                 for (auto component : m_components)
                 {
-                    if (component != nullptr)
+                    if (component != nullptr && m_visible)
                         component->onCollisionEnter(collider);
                 }
             }
@@ -121,6 +136,8 @@ namespace dmsh::core
             inline Transform& getTransform() const { return *m_transform; }
             inline std::string getTag() const { return m_tag; }
             inline void setTag(const std::string& tag) { m_tag = tag; }
+            inline bool isVisible() const { return m_visible; }
+            inline void setVisible(bool visible) { m_visible = visible; }
         private:
             friend class SceneManager;
             inline void initialStart()
@@ -135,7 +152,8 @@ namespace dmsh::core
                 m_transform->invokeCallbacks();            
                 onStart();
             }
-            
+
+            bool m_visible;
             std::string m_tag;
             std::int32_t m_id;
             // Base components

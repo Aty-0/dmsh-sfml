@@ -2,6 +2,7 @@
 #include "../core/sceneManager.h"
 #include "../core/component.h"
 #include "../core/inputManager.h"
+#include "../core/coroutine.h"
 
 namespace dmsh::game
 {    
@@ -16,11 +17,14 @@ namespace dmsh::game
             {
                 
             }
-
+            
             virtual void onMouseUnselected(const sf::Vector2f& pos) override;
             virtual void onMouseSelected(const sf::Vector2f& pos) override;
         private:
             void onIsSelectedChanged();
+            
+            core::coroutines::Coroutine popupAnimation();
+            core::coroutines::Coroutine popoutAnimation();
 
             friend class NodeEditor; 
             NodeEditor* m_nodeEditor;

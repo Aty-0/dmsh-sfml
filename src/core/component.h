@@ -5,6 +5,7 @@
 namespace dmsh::core
 {
     class GameObject;
+    class InputManager;
     struct Collider;
     class Component 
     {    
@@ -23,6 +24,7 @@ namespace dmsh::core
 
             virtual void onStart() {} 
             virtual void onDestroy() {} 
+            virtual void onInput(InputManager& input) {} 
             virtual void onRender(sf::RenderWindow& window) {} 
             virtual void onUpdate(float delta) {}
             virtual void onMouseUnselected(const sf::Vector2f& pos) {}

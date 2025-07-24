@@ -9,6 +9,34 @@ namespace dmsh::core
         m_listeners.clear();
     }
 
+    void InputManager::addListener(const std::string& name, const InputListenerType& type, const KeyCode& key)
+    {
+        auto listener = Listener();
+        listener.device = InputDevice::Keyboard;
+        listener.type = type;
+        listener.keyCode = key;
+        m_listeners.insert({name, listener});
+    }
+    
+    void InputManager::addListener(const std::string& name, const InputListenerType& type, const MouseButtons& button)
+    {
+        auto listener = Listener();
+        listener.device = InputDevice::Mouse;
+        listener.type = type;
+        listener.mouseButton = button;
+        m_listeners.insert({name, listener});
+    }
+
+    void InputManager::addListener(const std::string& name, const InputListenerType& type, const JoystickAxis& axis)
+    {
+        auto listener = Listener();
+        listener.device = InputDevice::Joystick;
+        listener.type = type;
+        listener.joystickAxis = axis;
+        m_listeners.insert({name, listener});
+    }
+
+       
     void InputManager::addListener(const std::string& name, const InputListenerType& type, const KeyCode& key, 
         const std::function<void()>& callback)
     {
@@ -51,10 +79,24 @@ namespace dmsh::core
     {
         for (const auto& [key, listener] : m_listeners)
         {
-            if (listener.stayActive)
+            if (listener.stayActive && listener.callback != nullptr)
                 listener.callback();     
         }                     
-        
+    }
+
+    bool InputManager::isListenerActive(const std::string& name) 
+    {
+        auto listener = m_listeners.find(name);
+        if (listener == m_listeners.end())
+            return false;
+
+        const bool result = listener->second.stayActive || listener->second.isActive;
+        if (result && !listener->second.stayActive) 
+        {
+            listener->second.isActive = false;
+        }
+
+        return result;
     }
 
     bool InputManager::isKeyDown(const KeyCode& key) const
@@ -80,29 +122,40 @@ namespace dmsh::core
                         case InputListenerType::KeyPressed:   
                         {
                             auto key = event.getIf<sf::Event::KeyPressed>();
-                            if (key != nullptr && key->code == listener.keyCode && listener.callback != nullptr)
-                                listener.callback();                 
+                            if (key != nullptr && key->code == listener.keyCode)
+                            {
+                                listener.isActive = true;
+                                if (listener.callback != nullptr)
+                                    listener.callback();                 
+                            }
                             break;                
                         }
                         case InputListenerType::KeyReleased:
                         {
                             auto key = event.getIf<sf::Event::KeyReleased>();
-                            if (key != nullptr && key->code == listener.keyCode && listener.callback != nullptr)
-                                listener.callback();
+                            if (key != nullptr && key->code == listener.keyCode)
+                            {
+                                listener.isActive = true;
+                                if (listener.callback != nullptr)
+                                    listener.callback();
+                            }
                             break;                                    
                         }
                         case InputListenerType::KeyHold:
                         {
-                            if (listener.callback == nullptr)
-                                break;
-
                             auto keyPressed = event.getIf<sf::Event::KeyPressed>();
                             auto keyReleased = event.getIf<sf::Event::KeyReleased>();
                             
                             if (keyPressed != nullptr && keyPressed->code == listener.keyCode)
+                            {
+                                listener.isActive = true;
                                 listener.stayActive = true;
+                            }
                             else if (listener.stayActive && keyReleased != nullptr && keyReleased->code == listener.keyCode)
+                            {
+                                listener.isActive = false;
                                 listener.stayActive = false;
+                            }
                          
                             break;                
                         }
@@ -119,43 +172,64 @@ namespace dmsh::core
                         case InputListenerType::MouseMoved:
                         {
                             auto move = event.getIf<sf::Event::MouseMoved>();
-                            if (move != nullptr && listener.callback != nullptr)
-                                listener.callback();                 
+                            if (move != nullptr)
+                            {
+                                listener.isActive = true;
+                                if (listener.callback != nullptr)
+                                    listener.callback();                 
+                            }
                             break;
                         }   
                         case InputListenerType::Wheel:
                         {
                             auto scroll = event.getIf<sf::Event::MouseWheelScrolled>();
-                            if (scroll != nullptr && listener.callback != nullptr)
-                                listener.callback();                 
+                            if (scroll != nullptr)
+                            {
+                                listener.isActive = true;
+                                if (listener.callback != nullptr)
+                                    listener.callback();                 
+                            }
                             break;
                         }
                         case InputListenerType::KeyPressed:   
                         {
                             auto button = event.getIf<sf::Event::MouseButtonPressed>();
-                            if (button != nullptr && button->button == listener.mouseButton && listener.callback != nullptr)
-                                listener.callback();                 
+                            if (button != nullptr && button->button == listener.mouseButton)
+                            {
+                                listener.isActive = true;
+
+                                if (listener.callback != nullptr)
+                                    listener.callback();                 
+                            }
                             break;                
                         }
                         case InputListenerType::KeyReleased:
                         {
                             auto button = event.getIf<sf::Event::MouseButtonReleased>();
-                            if (button != nullptr && button->button == listener.mouseButton && listener.callback != nullptr)
-                                listener.callback();                 
+                            if (button != nullptr && button->button == listener.mouseButton)
+                            {
+                                listener.isActive = true;
+    
+                                if (listener.callback != nullptr)
+                                    listener.callback();                 
+                            }
                             break;                                    
                         }
                         case InputListenerType::KeyHold:
                         {
-                            if (listener.callback == nullptr)
-                                break;
-
                             auto buttonPressed = event.getIf<sf::Event::MouseButtonPressed>();
                             auto buttonReleased = event.getIf<sf::Event::MouseButtonReleased>();
                             
                             if (buttonPressed != nullptr && buttonPressed->button == listener.mouseButton)
+                            {
+                                listener.isActive = true;
                                 listener.stayActive = true;
+                            }
                             else if (listener.stayActive && buttonReleased != nullptr && buttonReleased->button == listener.mouseButton)
+                            {
+                                listener.isActive = false;
                                 listener.stayActive = false;
+                            }
                             break;                                    
                         }
                         default:

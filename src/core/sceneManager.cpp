@@ -13,6 +13,19 @@ namespace dmsh::core
         m_scene.GameObjects.shrink_to_fit();
     }
     
+    void SceneManager::onInput(InputManager& input)
+    {
+        for (std::size_t i = 0; i < m_scene.GameObjects.size(); ++i) 
+        {
+            auto& weak = m_scene.GameObjects[i];
+            const auto go = weak.lock();
+            if (!go)
+                continue;
+
+            go->onInput(input);
+        }    
+    }
+
     void SceneManager::onMouseClicked(sf::RenderWindow& window)
     {  
         static const auto gameWindow = core::Window::getInstance();

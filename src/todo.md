@@ -4,16 +4,18 @@
 - [ ] save patterns
 - [ ] implement enemy movement
 - [ ] buttons, window
-- [ ] add onInputUpdate for game objects and components 
-    - [ ] add isListenerActive(name)
-    That method is more correct and convenient than we are have now 
- 
-## 22/07/2025
 - [ ] add splines for patterns
-- [ ] implement pattern class 
-    - [ ] add vector of patterns in editor 
-    - [ ] we can change patterns 
 - [ ] investigate about sf::config  
+ 
+## 23-24/07/2025
+- [x] coroutine
+- [x] improved editor a bit
+- [x] implement pattern class 
+    - [x] add vector of patterns in editor 
+    - [x] we can change patterns 
+- [x] add onInputUpdate for game objects and components 
+    - [x] add isListenerActive(name)
+    That method is more correct and convenient than we are have now 
 
 ## 21/07/2025
 - [x] onMouseUnselect 

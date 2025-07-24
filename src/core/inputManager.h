@@ -39,6 +39,7 @@ namespace dmsh::core
             MouseButtons mouseButton;
             JoystickAxis joystickAxis;
             std::function<void()> callback;
+            bool isActive;
             bool stayActive; // key hold
         };
 
@@ -54,11 +55,18 @@ namespace dmsh::core
             void addListener(const std::string& name, const InputListenerType& type, const JoystickAxis& axis, 
                 const std::function<void()>& callback);
 
+            void addListener(const std::string& name, const InputListenerType& type, const KeyCode& key);
+            void addListener(const std::string& name, const InputListenerType& type, const MouseButtons& button);
+            void addListener(const std::string& name, const InputListenerType& type, const JoystickAxis& axis);
+
             void removeListener(const std::string& name);
             
+            bool isListenerActive(const std::string& name);
+
             void update();
             void process(const sf::Event& event);
             
+
             bool isKeyDown(const KeyCode& key) const;
             bool isKeyReleased(const KeyCode& key) const;
 
@@ -92,6 +100,8 @@ namespace dmsh::core
                             stream << key << " | Keyboard | Key: " << 
                                 (listener.keyCode == KeyCode::Unknown ? "Unknown" : keyString[static_cast<std::int32_t>(listener.keyCode)]) <<
                                 " | Type:" << getStateName(listener.type) <<
+                                " | isActive:" << listener.isActive <<
+                                " | stayActive:" << listener.stayActive <<
                                 "\n";
                             break;
                         case InputDevice::Mouse:
