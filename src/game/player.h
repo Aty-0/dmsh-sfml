@@ -4,6 +4,7 @@
 #include "../core/inputManager.h"
 #include "../core/coroutine.h"
 #include "bullet.h"
+#include "bulletPool.h"
 
 namespace dmsh::game
 {
@@ -33,5 +34,7 @@ namespace dmsh::game
             float m_shootDuration;
             float m_speed;
             sf::Vector2i m_move;
+            
+            std::shared_ptr<BulletPool> m_bulletPool;
     };
 }

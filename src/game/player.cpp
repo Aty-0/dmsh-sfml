@@ -20,6 +20,8 @@ namespace dmsh::game
         collider->setRect(sf::FloatRect { { 0.0f, 0.0f }, { 30.0f, 50.0f } });      
         
         owner->setTag("player");
+
+        m_bulletPool = std::make_shared<BulletPool>(32);
     }
     
     void Player::onInput(core::InputManager& input)
@@ -84,10 +86,7 @@ namespace dmsh::game
 
     core::coroutines::Coroutine Player::shootCoroutine()
     {     
-        static const auto sceneManager = core::SceneManager::getInstance();
-        auto go = sceneManager->createGameObject<core::GameObject>();
-        go->getTransform().setPosition(getOwner()->getTransform().getPosition());
-        go->createComponent<Bullet>();
+        m_bulletPool->pool(getOwner()->getTransform().getPosition());
         co_await core::coroutines::WaitForSeconds(m_shootDuration);                                          
     }
 }

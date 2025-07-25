@@ -11,7 +11,7 @@ namespace dmsh::game
     {
         public:
             Bullet() : 
-                m_speed(100.0f)
+                m_speed(400.0f)
             {
 
             }
