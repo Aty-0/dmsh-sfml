@@ -41,7 +41,8 @@ namespace dmsh::core
         sceneManager->set(scene);
         {            
             sceneDebugText = sceneManager->createGameObject<GameObject>();
-            
+            sceneDebugText->setVisible(false);
+
             sceneDebugTextComp = sceneDebugText->createComponent<Text>();
             sceneDebugTextComp->setFillColor(sf::Color::Yellow);
             sceneDebugTextComp->setSize(16);
@@ -56,8 +57,9 @@ namespace dmsh::core
 
             
             inputDebugText = sceneManager->createGameObject<GameObject>();            
+            inputDebugText->setVisible(false);
             inputDebugTextComp = inputDebugText->createComponent<Text>();
-            inputDebugTextComp->setFillColor(sf::Color::Yellow);
+            inputDebugTextComp->setFillColor(sf::Color::Red);
             inputDebugTextComp->setSize(14);
 
             auto inputDebugTextTransform = inputDebugText->getTransform();
@@ -86,13 +88,28 @@ namespace dmsh::core
             showDebugInfo = !showDebugInfo;
 
             inputDebugText->setVisible(showDebugInfo);
-            fpsDebugText->setVisible(showDebugInfo);
             sceneDebugText->setVisible(showDebugInfo);
         });
 
         // Add listener for mouse select event for all game objects
         inputManager->addListener("engine_scene_on_mouse_clicked", core::InputListenerType::KeyPressed, core::MouseButtons::Left, [&]() {
             sceneManager->onMouseClicked(sfWindow);
+        });
+
+        inputManager->addListener("engine_show_colliders", core::InputListenerType::KeyPressed, core::KeyCode::F9, [&]() {
+            auto scene = sceneManager->getScene();
+            for (auto goWeak : scene.GameObjects)
+            {
+                auto go = goWeak.lock();
+                if (go)
+                {
+                    auto rectCollider = go->getComponent<RectangleCollider>();
+                    if (rectCollider)
+                    {
+                        rectCollider->setAlwaysShowRect(!rectCollider->getAlwaysShowRect());
+                    }
+                }
+            }
         });
 
         while (window->isOpen())
@@ -117,9 +134,10 @@ namespace dmsh::core
         sceneManager->onUpdate(delta);
         coroutineScheduler->update();
         
+        fpsDebugTextComp->setText("fps:{}\ndelta:{}", time->getFps(), delta);
+        
         if (showDebugInfo)
         {
-            fpsDebugTextComp->setText("fps:{}\ndelta:{}", time->getFps(), delta);
             inputDebugTextComp->setText(inputManager->toString());
             sceneDebugTextComp->setText(sceneManager->toString());
         }

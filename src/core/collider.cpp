@@ -18,6 +18,8 @@ namespace dmsh::core
         rectUpd.size.y *= scale.y;
         return rectUpd;
     };
+    
+    bool RectangleCollider::m_alwaysShowRect;
 
     bool RectangleCollider::contains(const sf::Vector2f& pos) const 
     {                
@@ -27,6 +29,11 @@ namespace dmsh::core
 
     bool RectangleCollider::intersect(const Collider& collider) const
     {
+        // Don't do any intersect if owner for both sides is not visible 
+        if (!getOwner()->isVisible() 
+            || !collider.getOwner()->isVisible())
+            return false;
+
         auto rectCollider = dynamic_cast<const RectangleCollider*>(&collider);        
         if (rectCollider == nullptr)
         {
@@ -42,7 +49,7 @@ namespace dmsh::core
 
     void RectangleCollider::onRender(sf::RenderWindow& window) 
     {
-        if (m_showRect)
+        if (m_showRect || m_alwaysShowRect)
         {
             auto rect = updateRectByTransform(*this);
             debug::Square::draw(window, rect.position, rect.size, sf::Color::Magenta);

@@ -43,7 +43,15 @@ namespace dmsh::core
 
         inline sf::FloatRect getRect() const { return m_rect; } 
         inline void setRect(const sf::FloatRect& rect) { m_rect = rect; }
+
+        inline void setShowRect(bool show) { m_showRect = show; }
+        inline bool getShowRect() { return m_showRect; }
+        
+        inline void setAlwaysShowRect(bool show) { m_alwaysShowRect = show; }
+        inline bool getAlwaysShowRect() { return m_alwaysShowRect; }
+
         private:
+            static bool m_alwaysShowRect;
             bool m_showRect;
             sf::FloatRect m_rect;
     };
