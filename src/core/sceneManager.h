@@ -26,6 +26,8 @@ namespace dmsh::core
 
             void set(const Scene& scene);
             void rebuildZOrdering();
+
+            inline Scene getScene() const { return m_scene; }
         private:
             Scene m_scene;
         public:
@@ -45,6 +47,8 @@ namespace dmsh::core
                 
                 m_scene.GameObjects.shrink_to_fit();  
                 m_scene.GameObjects.push_back(go);
+                
+                rebuildZOrdering();
                 return go;
             }
             
@@ -62,12 +66,15 @@ namespace dmsh::core
                         // Remove expired ptr
                         return true;  
                 });
+
+                rebuildZOrdering();
             }
 
             inline std::string toString() const 
             {
                 std::stringstream out;
                 std::int32_t index = 0;
+                out << "size:" << m_scene.GameObjects.size() << "\n";
                 for (auto goWeak : m_scene.GameObjects)
                 {
                     auto go = goWeak.lock();
@@ -78,7 +85,6 @@ namespace dmsh::core
                     index++; 
                 }
                 
-                out << "\n" << "size:" << m_scene.GameObjects.size();
                 return out.str();
             }
     };

@@ -152,8 +152,7 @@ namespace dmsh::core
 
     void SceneManager::rebuildZOrdering()
     {
-        DMSH_DEBUG("rebuilding Z ordering...");
-        
+        //DMSH_DEBUG("rebuilding Z ordering...");        
         std::sort(m_scene.GameObjects.begin(), m_scene.GameObjects.end(), [](const auto& first, const auto& second) { 
             return first.lock()->getZDepth() < second.lock()->getZDepth();
         });
