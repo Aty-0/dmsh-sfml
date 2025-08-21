@@ -30,14 +30,14 @@ namespace dmsh::game
         m_selectedObjectTextComp->setFillColor(DEFAULT_TEXT_COLOR);
         m_selectedObjectTextComp->setSize(16);
         auto selectedObjectTextTransform = selectedObjectTextGo->getTransform();
-        selectedObjectTextTransform.setPosition({0, 100});
+        selectedObjectTextTransform->setPosition({0, 100});
         
         auto patternTextGo = sceneManager->createGameObject<core::GameObject>();        
         m_patternTextComp = patternTextGo->createComponent<core::Text>();
         m_patternTextComp->setFillColor(DEFAULT_TEXT_COLOR);
         m_patternTextComp->setSize(16);
         auto patternTextTransform = patternTextGo->getTransform();
-        patternTextTransform.setPosition({0, 50});
+        patternTextTransform->setPosition({0, 50});
 
         auto editModeTextGo = sceneManager->createGameObject<core::GameObject>();        
         auto editModeTextComp = editModeTextGo->createComponent<core::Text>();
@@ -46,7 +46,7 @@ namespace dmsh::game
         editModeTextComp->setText(m_onEditMode ? "Edit mode" : "Creation mode");
         
         auto editModeTextTransform = editModeTextGo->getTransform();
-        editModeTextTransform.setPosition({0, 150});         
+        editModeTextTransform->setPosition({0, 150});         
 
         auto noteTextGo = sceneManager->createGameObject<core::GameObject>();        
         auto noteTextComp = noteTextGo->createComponent<core::Text>();
@@ -55,7 +55,7 @@ namespace dmsh::game
         noteTextComp->setText("Note:\nCreate pattern: key - C\nNext Pattern: key - T\nPrevious pattern: key - R\nSwitch edit mode: key - Z");
         
         auto noteTextTransform = noteTextGo->getTransform();
-        noteTextTransform.setPosition({0, 550});   
+        noteTextTransform->setPosition({0, 550});   
 
         const auto inputManager = core::InputManager::getInstance();
         inputManager->addListener("editor_switch_edit_mode", core::InputListenerType::KeyPressed, core::KeyCode::Z, [this, editModeTextComp]() {
@@ -116,7 +116,7 @@ namespace dmsh::game
             static const auto gameWindow = core::Window::getInstance();
             const auto mousePos = gameWindow->getMousePosition();
             const auto worldCoords = gameWindow->getWindow().mapPixelToCoords(mousePos);
-            m_selected->getOwner()->getTransform().setPosition(worldCoords);
+            m_selected->getOwner()->getTransform()->setPosition(worldCoords);
         }
     }
 
@@ -178,8 +178,8 @@ namespace dmsh::game
             }
             if (prev != nullptr)
             {
-                auto currentPos = node->getOwner()->getTransform().getPosition();
-                auto prevPos = prev->getOwner()->getTransform().getPosition();
+                auto currentPos = node->getOwner()->getTransform()->getPosition();
+                auto prevPos = prev->getOwner()->getTransform()->getPosition();
                 core::debug::Line::draw(window, currentPos, prevPos, sf::Color::White);
             }
             prev = node;
@@ -198,11 +198,11 @@ namespace dmsh::game
         constexpr sf::Vector2f size = { 30.0f, 30.0f };
         collider->setRect(sf::FloatRect { { 0.0f, 0.0f }, size });
         
-        auto& goDrawable = go->getDrawable().create<sf::RectangleShape>();
+        auto& goDrawable = go->getDrawable()->create<sf::RectangleShape>();
         goDrawable.setSize(size);
         goDrawable.setFillColor(sf::Color::White);
-        auto& transform = go->getTransform();
-        transform.setPosition(pos);
+        auto transform = go->getTransform();
+        transform->setPosition(pos);
         auto node = go->createComponent<EnemyNode>();
         node->m_nodeEditor = this;
         
@@ -247,7 +247,7 @@ namespace dmsh::game
             auto nodes = m_currentPattern->Nodes;
             const auto index = static_cast<std::size_t>(std::find(nodes.begin(), nodes.end(), m_selected) - nodes.begin());
             const auto transform = m_selected->getOwner()->getTransform();
-            const auto pos = transform.getPosition();
+            const auto pos = transform->getPosition();
                              
             m_selectedObjectTextComp->setText("Selected:{}\nPos [x:{} y:{}]", index, pos.x, pos.y);
         }

@@ -6,6 +6,7 @@
 #include "inputManager.h"
 #include "text.h"
 #include "coroutine.h"
+#include "spatialGrid.h"
 
 #include "../game/player.h"
 #include "../game/nodeEditor.h"
@@ -16,11 +17,13 @@ namespace dmsh::core
     static const auto sceneManager = SceneManager::getInstance(); 
     static const auto inputManager = InputManager::getInstance(); 
     static const auto coroutineScheduler = coroutines::CoroutineScheduler::getInstance(); 
-
+    static const auto collisionGrid = CollisionSpatialGrid::getInstance(); 
     static const auto time = Time::getInstance();
+
     
     // TODO: Relocate to stats class 
     static bool showDebugInfo = false;
+    static bool showColliderGrid = false;
     
     static std::shared_ptr<GameObject> sceneDebugText;
     static std::shared_ptr<GameObject> fpsDebugText;    
@@ -35,10 +38,26 @@ namespace dmsh::core
         const auto window = Window::getInstance();
         window->create(1280, 768, "dmsh-sfml");
         
-        auto& sfWindow = window->getWindow();                
+        auto& sfWindow = window->getWindow();     
+
+        // TODO: If we want to change window res, we need to update this       
+        // FIXME: window size getter 
+        const auto windowSize = window->getWindow().getSize();
+        // TODO: What's size will be perfect ?? 
+        const auto cellDefaultSize = sf::Vector2i(150, 150);
+        const sf::Vector2i numCells = { 
+            static_cast<std::int32_t>(floor(windowSize.x / cellDefaultSize.x)),
+            static_cast<std::int32_t>(floor(windowSize.y / cellDefaultSize.y)) 
+        };
+        const sf::Vector2f sizeCells = {
+            static_cast<float>(floor(windowSize.x / numCells.x)) + 2.0f,
+            static_cast<float>(floor(windowSize.y / numCells.y)) + 2.0f 
+        };
         
+        collisionGrid->createCells(numCells, sizeCells);
+
         Scene scene = { };
-        sceneManager->set(scene);
+        sceneManager->set(std::move(scene));
         {            
             sceneDebugText = sceneManager->createGameObject<GameObject>();
             sceneDebugText->setVisible(false);
@@ -48,7 +67,7 @@ namespace dmsh::core
             sceneDebugTextComp->setSize(16);
 
             auto sceneDebugTextTransform = sceneDebugText->getTransform();
-            sceneDebugTextTransform.setPosition({100, 100});
+            sceneDebugTextTransform->setPosition({100, 100});
 
             fpsDebugText = sceneManager->createGameObject<GameObject>();            
             fpsDebugTextComp = fpsDebugText->createComponent<Text>();
@@ -63,7 +82,7 @@ namespace dmsh::core
             inputDebugTextComp->setSize(14);
 
             auto inputDebugTextTransform = inputDebugText->getTransform();
-            inputDebugTextTransform.setPosition({500, 100});
+            inputDebugTextTransform->setPosition({500, 100});
             
             auto nodeEditor = sceneManager->createGameObject<GameObject>();
             nodeEditor->createComponent<game::NodeEditor>();
@@ -71,18 +90,18 @@ namespace dmsh::core
             auto playerGo = sceneManager->createGameObject<GameObject>();
             playerGo->createComponent<game::Player>();
             
-            for (std::int32_t i = 0; i < 15; i++)
+            for (std::int32_t i = 0; i < 10; i++)
             {
                 auto npc = sceneManager->createGameObject<GameObject>();
-                auto& transform = npc->getTransform();
+                auto transform = npc->getTransform();
                 npc->createComponent<game::Enemy>();
-                transform.setPosition({transform.getPosition().x + (i * 5), transform.getPosition().y + (i * 10)});
+                transform->setPosition({100.0f + (i * 14), 100.0f});
             }
       
         }
 
         sceneManager->rebuildZOrdering();
-
+        
         // Add listener for debug switcher
         inputManager->addListener("engine_debug_info_switch", core::InputListenerType::KeyPressed, core::KeyCode::F10, [&]() {
             showDebugInfo = !showDebugInfo;
@@ -95,21 +114,10 @@ namespace dmsh::core
         inputManager->addListener("engine_scene_on_mouse_clicked", core::InputListenerType::KeyPressed, core::MouseButtons::Left, [&]() {
             sceneManager->onMouseClicked(sfWindow);
         });
-
+        
         inputManager->addListener("engine_show_colliders", core::InputListenerType::KeyPressed, core::KeyCode::F9, [&]() {
-            auto scene = sceneManager->getScene();
-            for (auto goWeak : scene.GameObjects)
-            {
-                auto go = goWeak.lock();
-                if (go)
-                {
-                    auto rectCollider = go->getComponent<RectangleCollider>();
-                    if (rectCollider)
-                    {
-                        rectCollider->setAlwaysShowRect(!rectCollider->getAlwaysShowRect());
-                    }
-                }
-            }
+            RectangleCollider::setAlwaysShowRect(!RectangleCollider::getAlwaysShowRect());
+            showColliderGrid = !showColliderGrid;
         });
 
         while (window->isOpen())
@@ -124,6 +132,11 @@ namespace dmsh::core
     void Game::onRender(sf::RenderWindow& window)
     {
         window.clear();
+        if (showColliderGrid)
+        {
+            collisionGrid->onRender(window);
+        }
+
         sceneManager->onRender(window);        
         window.display();
     }
@@ -133,6 +146,8 @@ namespace dmsh::core
         inputManager->update();
         sceneManager->onUpdate(delta);
         coroutineScheduler->update();
+        
+        collisionGrid->checkCollisions();
         
         fpsDebugTextComp->setText("fps:{}\ndelta:{}", time->getFps(), delta);
         

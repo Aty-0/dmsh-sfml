@@ -26,7 +26,7 @@ namespace dmsh::core
                 auto owner = getOwner();
                 owner->setZDepth(zDepth::UI_LAYER, true);
 
-                m_drawableText = &owner->getDrawable().create<sf::Text>(defaultFont);            
+                m_drawableText = &owner->getDrawable()->create<sf::Text>(defaultFont);            
             }
             
             inline std::string getText() const 
@@ -44,10 +44,10 @@ namespace dmsh::core
                     m_drawableText->setString(std::vformat(text, std::make_format_args(args...)));
             }
 
-            inline void setText(const std::string& text)
+            inline void setText(std::string_view text)
             {
                 if (m_drawableText != nullptr)
-                    m_drawableText->setString(text);
+                    m_drawableText->setString(std::string{ text });
             }
 
             inline void setFillColor(const sf::Color& color)

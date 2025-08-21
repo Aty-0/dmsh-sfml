@@ -23,20 +23,21 @@ namespace dmsh::core
             void onMouseClicked(sf::RenderWindow& window);
             void onRender(sf::RenderWindow& window);
             void onUpdate(float delta);
-
-            void set(const Scene& scene);
+            
+            void set(Scene&& scene);            
             void rebuildZOrdering();
 
-            inline Scene getScene() const { return m_scene; }
+            inline Scene& getScene() { return m_scene; }
         private:
             Scene m_scene;
+
         public:
             template<typename T>
             inline std::shared_ptr<T> createGameObject()
             {
                 static_assert(std::is_same<GameObject, T>::value 
                     || std::is_base_of<GameObject, T>::value, "T must be GameObject or derived from GameObject");
-
+                
                 auto go = std::make_shared<T>();
                 static std::uint32_t id = 0;
                 go->initialStart();
@@ -54,19 +55,37 @@ namespace dmsh::core
             
             inline void deleteGameObject(std::shared_ptr<GameObject> go)
             {
-                if (go == nullptr)
+                if (!go)
                     return;
 
-                std::erase_if(m_scene.GameObjects, [&](const std::weak_ptr<GameObject>& weak) {
+                auto it = std::find_if(m_scene.GameObjects.begin(), m_scene.GameObjects.end(), [&](const std::weak_ptr<GameObject>& weak) {
+                    if (!weak.expired())
+                    {
                         auto locked = weak.lock();
                         if (locked) 
                         {
                             return locked == go; 
                         }
-                        // Remove expired ptr
-                        return true;  
+                    }
+                
+                    return false;  
                 });
 
+                if (it != m_scene.GameObjects.end())
+                {
+                    if (!it->expired())
+                    {
+                        it->lock()->onDestroy();
+                    }
+                    m_scene.GameObjects.erase(it);
+                }
+
+                // Also remove expired objects
+                std::erase_if(m_scene.GameObjects, [&](const std::weak_ptr<GameObject>& weak){ 
+                    return weak.expired();
+                });
+
+                m_scene.GameObjects.shrink_to_fit();  
                 rebuildZOrdering();
             }
 

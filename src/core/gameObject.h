@@ -40,8 +40,10 @@ namespace dmsh::core
             {
                 for (auto component : m_components)
                 {
-                    if (component != nullptr)
-                        component->onDestroy();
+                    if (!component || !m_visible)
+                        continue;
+                    
+                    component->onDestroy();
                 }
             }
 
@@ -55,8 +57,10 @@ namespace dmsh::core
             {
                 for (auto component : m_components)
                 {
-                    if (component != nullptr && m_visible)
-                        component->onInput(input);
+                    if (!component || !m_visible)
+                        continue;
+                    
+                    component->onInput(input);
                 }
             }
             
@@ -64,8 +68,10 @@ namespace dmsh::core
             {
                 for (auto component : m_components)
                 {
-                    if (component != nullptr && m_visible)
-                        component->onRender(window);
+                    if (!component || !m_visible)
+                        continue;
+                    
+                    component->onRender(window);
                 }
             }
         
@@ -73,8 +79,10 @@ namespace dmsh::core
             {
                 for (auto component : m_components)
                 {
-                    if (component != nullptr && m_visible)
-                        component->onUpdate(delta);
+                    if (!component || !m_visible)
+                        continue;
+                    
+                    component->onUpdate(delta);
                 }
             }
 
@@ -82,8 +90,10 @@ namespace dmsh::core
             {
                 for (auto component : m_components)
                 {
-                    if (component != nullptr && m_visible)
-                        component->onMouseClicked(pos);
+                    if (!component || !m_visible)
+                        continue;
+                    
+                    component->onMouseClicked(pos);
                 }
             }
 
@@ -91,8 +101,10 @@ namespace dmsh::core
             {
                 for (auto component : m_components)
                 {
-                    if (component != nullptr && m_visible)
-                        component->onMouseUnselected(pos);
+                    if (!component || !m_visible)
+                        continue;
+                    
+                    component->onMouseUnselected(pos);
                 }
             }
 
@@ -100,8 +112,10 @@ namespace dmsh::core
             {
                 for (auto component : m_components)
                 {
-                    if (component != nullptr && m_visible)
-                        component->onMouseSelected(pos);
+                    if (!component || !m_visible)
+                        continue;
+                    
+                    component->onMouseSelected(pos);
                 }
             }
 
@@ -109,8 +123,10 @@ namespace dmsh::core
             {
                 for (auto component : m_components)
                 {
-                    if (component != nullptr && m_visible)
-                        component->onCollisionExit(collider);
+                    if (!component || !m_visible)
+                        continue;
+                    
+                    component->onCollisionExit(collider);
                 }
             }
             
@@ -118,8 +134,10 @@ namespace dmsh::core
             {
                 for (auto component : m_components)
                 {
-                    if (component != nullptr && m_visible)
-                        component->onCollisionStay(collider);             
+                    if (!component || !m_visible)
+                        continue;
+
+                    component->onCollisionStay(collider);             
                 }
             } 
             
@@ -127,29 +145,39 @@ namespace dmsh::core
             {
                 for (auto component : m_components)
                 {
-                    if (component != nullptr && m_visible)
-                        component->onCollisionEnter(collider);
+                    if (!component || !m_visible)
+                        continue;
+                    
+                    component->onCollisionEnter(collider);
                 }
             }
         
-            inline Drawable& getDrawable() const { return *m_drawable; }
-            inline Transform& getTransform() const { return *m_transform; }
+            inline std::shared_ptr<Drawable> getDrawable() const { return m_drawable; }
+            inline std::shared_ptr<Transform> getTransform() const { return m_transform; }
+
+            // TODO: Tags; Rework, use macro or classes
             inline std::string getTag() const { return m_tag; }
             inline void setTag(const std::string& tag) { m_tag = tag; }
             inline bool isVisible() const { return m_visible; }
             inline void setVisible(bool visible) { m_visible = visible; }
+            
+            // FIXME: UUID
+            inline std::int32_t getId() const { return m_id; }
         private:
             friend class SceneManager;
             inline void initialStart()
             {
                 m_drawable = createComponent<Drawable>();
                 m_transform = createComponent<Transform>();
+
                 // Set callbacks for drawable 
-                m_transform->onPositionChanged = std::bind(&Drawable::updatePositionForTransformable, m_drawable.get(), std::placeholders::_1);
-                m_transform->onRotationChanged = std::bind(&Drawable::updateRotationForTransformable, m_drawable.get(), std::placeholders::_1);
-                m_transform->onScaleChanged = std::bind(&Drawable::updateScaleForTransformable, m_drawable.get(), std::placeholders::_1);
+                m_transform->Signals.onPositionChanged.connect(&Drawable::updatePositionForTransformable, m_drawable.get());
+                m_transform->Signals.onRotationChanged.connect(&Drawable::updateRotationForTransformable, m_drawable.get());
+                m_transform->Signals.onScaleChanged.connect(&Drawable::updateScaleForTransformable, m_drawable.get());
+
                 // Invoke all callbacks to set initial values for drawable 
-                m_transform->invokeCallbacks();            
+                m_transform->invokeCallbacks();                            
+
                 onStart();
             }
 
@@ -168,34 +196,33 @@ namespace dmsh::core
             {
                 static_assert(std::is_base_of<Component, T>::value, "class must be based on Component");                
                 auto component = std::make_shared<T>(std::forward<Args>(args)...);
-                auto self = shared_from_this();
-                DMSH_ASSERT(self, "self is invalid");
-                component->setOwner(self);
-                component->onStart();
-                m_components.push_back(component);
+                addComponent(component, std::forward<Args>(args)...);
                 return component;
             }
             
             template <typename T, typename... Args>
-            inline std::shared_ptr<T> addComponent(std::shared_ptr<T> component, Args&&... args) const
+            inline void addComponent(std::shared_ptr<T> component, Args&&... args)
             {
                 static_assert(std::is_base_of<Component, T>::value, "class must be based on Component");                
                 auto self = shared_from_this();
                 DMSH_ASSERT(self, "self is invalid");
-                component->setOwner(self);
+                component->setOwner(std::move(self));
+                component->setSelf(component);
                 component->onStart();
-                m_components.push_back(component);
-                return component;
+                m_components.push_back(std::move(component));
             }
             
             template <typename T>
             inline std::shared_ptr<T> getComponent() const
             {
                 static_assert(std::is_base_of<Component, T>::value, "class must be based on Component");                
-                for (const auto& component : m_components)
+                for (auto component : m_components)
                 {
-                    if (!component)
+                    if (!component) 
+                    {
                         continue;
+                    }
+
                     const auto derived = std::dynamic_pointer_cast<T>(component);
                     if (derived != nullptr)
                     {

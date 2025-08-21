@@ -29,7 +29,7 @@ namespace dmsh::game
                     return;
                 }
 
-                go->getTransform().setPosition(pos);
+                go->getTransform()->setPosition(pos);
                 go->setVisible(true);
                 index++;
                 if (index >= m_pool.size())

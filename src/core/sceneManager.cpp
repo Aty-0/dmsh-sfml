@@ -1,7 +1,7 @@
 #include "sceneManager.h"
 #include "logger.h"
 #include "window.h"
-#include <unordered_set>
+#include "spatialGrid.h"
 
 namespace dmsh::core
 {    
@@ -17,12 +17,11 @@ namespace dmsh::core
     {
         for (std::size_t i = 0; i < m_scene.GameObjects.size(); ++i) 
         {
-            auto& weak = m_scene.GameObjects[i];
-            const auto go = weak.lock();
-            if (!go)
+            auto weakGo = m_scene.GameObjects[i];
+            if (weakGo.expired())
                 continue;
 
-            go->onInput(input);
+            weakGo.lock()->onInput(input);
         }    
     }
 
@@ -32,30 +31,31 @@ namespace dmsh::core
         const auto mousePos = gameWindow->getMousePosition();
         const auto worldCoords = window.mapPixelToCoords(mousePos);
         
-        static Collider* collidedInPrevFrame = nullptr;;
-        Collider* collided = nullptr;
+        static std::shared_ptr<Collider> collidedInPrevFrame;
+        std::shared_ptr<Collider> collided;
+
         for (std::size_t i = 0; i < m_scene.GameObjects.size(); ++i) 
         {               
-            auto& weak = m_scene.GameObjects[i];
-            const auto go = weak.lock();
-            if (!go)
-                continue;
-                
-            go->onMouseClicked(worldCoords);
-                
-            const auto collider = go->getComponent<Collider>();
-            if (!collider)
+            auto& goWeak = m_scene.GameObjects[i];
+            if (goWeak.expired())
                 continue;
 
+            const auto go = goWeak.lock();                
+            go->onMouseClicked(worldCoords);
+                
+            auto collider = go->getComponent<Collider>();
+            if (!collider)
+                continue;
+            
             if (collider->contains(worldCoords))
             {
                 go->onMouseSelected(worldCoords);
 
-                if (collidedInPrevFrame != collider.get())
-                    collided = collider.get();
+                if (&collidedInPrevFrame != &collider)
+                    collided = collider;
             }
 
-            if (collided != collider.get()) 
+            if (&collided != &collider) 
             {
                 go->onMouseUnselected(worldCoords);
             }
@@ -64,89 +64,34 @@ namespace dmsh::core
         collidedInPrevFrame = collided;
     }
 
-    void SceneManager::set(const Scene& scene)
+    void SceneManager::set(Scene&& scene)
     {
         m_scene.GameObjects.clear();
-        m_scene = scene;
+        m_scene = std::move(scene);
     }
 
     void SceneManager::onRender(sf::RenderWindow& window)
     {
         for (std::size_t i = 0; i < m_scene.GameObjects.size(); ++i)         
         {            
-            auto& weak = m_scene.GameObjects[i];
-            if (auto go = weak.lock())
-                go->onRender(window);
+            auto goWeak = m_scene.GameObjects[i];
+            if (goWeak.expired())
+                continue;
+
+            goWeak.lock()->onRender(window);
         }
     }
-    
+
     void SceneManager::onUpdate(float delta)
     {
         for (std::size_t i = 0; i < m_scene.GameObjects.size(); ++i)         
         {
-            auto& weak = m_scene.GameObjects[i];
-            auto go = weak.lock();
-            if (!go)
+            auto goWeak = m_scene.GameObjects[i];
+            if (goWeak.expired())
                 continue;
 
-            go->onUpdate(delta);
-            
-            auto collider = go->getComponent<Collider>();
-            if (!collider)
-                continue;
-            
-            collider->m_collisionTracker.Collided.clear();            
-
-            for (std::size_t j = 0; j < m_scene.GameObjects.size(); ++j)         
-            {
-                auto& otherWeak = m_scene.GameObjects[j];
-                auto other = otherWeak.lock();
-                if (!other || other == go)
-                    continue;
-                                     
-                auto otherCollider = other->getComponent<Collider>();
-                if (!otherCollider)
-                    continue;
-
-                if (collider->intersect(*otherCollider))
-                {
-                    // Try to find a game object pointer on a prev frame, if we are not found a go, 
-                    // then we are invoke a start callback
-                    if (!collider->m_collisionTracker.isObjectCollidedPrevFrame(otherCollider.get()))
-                    {
-                        DMSH_DEBUG("it's a on collision enter callback");
-                        go->onCollisionEnter(*otherCollider);
-                    }
-
-                    // Invoke a stay collision callback
-                    go->onCollisionStay(*otherCollider);
-                    collider->m_collisionTracker.Collided.insert(otherCollider.get());
-                }                                                            
-            }
-        }
-        
-        for (std::size_t i = 0; i < m_scene.GameObjects.size(); ++i)         
-        {          
-            auto& weak = m_scene.GameObjects[i];
-            auto go = weak.lock();
-            if (!go)
-                continue;
-
-            auto collider = go->getComponent<Collider>();
-            if (!collider)
-                continue;
-
-            for (auto other : collider->m_collisionTracker.CollidedInPrevFrame) 
-            {
-                if (!collider->m_collisionTracker.isObjectCollided(other)) 
-                {
-                    // TODO: other->getCollider() it's a wrong I think
-                    DMSH_DEBUG("it's a on collision exit callback");
-                    other->onCollisionExit(*collider);
-                }
-            }
-    
-            collider->m_collisionTracker.CollidedInPrevFrame = collider->m_collisionTracker.Collided;
+            auto go = goWeak.lock();
+            go->onUpdate(delta);                   
         }
     }
 
@@ -154,6 +99,9 @@ namespace dmsh::core
     {
         //DMSH_DEBUG("rebuilding Z ordering...");        
         std::sort(m_scene.GameObjects.begin(), m_scene.GameObjects.end(), [](const auto& first, const auto& second) { 
+            if (first.expired() || second.expired())
+                return false;
+
             return first.lock()->getZDepth() < second.lock()->getZDepth();
         });
     }

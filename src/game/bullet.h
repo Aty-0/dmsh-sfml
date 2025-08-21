@@ -20,7 +20,7 @@ namespace dmsh::game
             {
                 auto owner = getOwner();
 
-                auto& shape = owner->getDrawable().create<sf::RectangleShape>();
+                auto& shape = owner->getDrawable()->create<sf::RectangleShape>();
                 shape.setSize({20.0f, 20.0f});
                 shape.setFillColor(sf::Color::White);
 
@@ -35,9 +35,9 @@ namespace dmsh::game
 
                 if (owner != nullptr)
                 {
-                    auto& transform = owner->getTransform();
-                    auto pos = transform.getPosition();
-                    transform.setPosition({pos.x, pos.y - (m_speed * delta)});
+                    auto transform = owner->getTransform();
+                    auto pos = transform->getPosition();
+                    transform->setPosition({pos.x, pos.y - (m_speed * delta)});
                 }
             }   
         private: 

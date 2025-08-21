@@ -114,8 +114,8 @@ namespace dmsh::core::coroutines
         auto clock = std::chrono::high_resolution_clock::now();
 
         while(it != m_coroutines.end())
-        {
-            if(it->second->is_done())       
+        {            
+            if(!it->second || it->second->is_done())       
             {
                 //DMSH_DEBUG("is done, remove coroutine...");
                 it = m_coroutines.erase(it);                            
@@ -161,9 +161,13 @@ namespace dmsh::core::coroutines
         if (m_coroutines.find(hashCode) != m_coroutines.end())
         {
             auto findedCoroutine = m_coroutines[hashCode];
-            if (!findedCoroutine->is_done())
+            if (!findedCoroutine)
             {
-                DMSH_DEBUG("too bad, it's not done %s", coroutineFunction.target_type().name());
+                DMSH_ERROR("coroutine is finded in list, but it's empty, hm, continue %s", coroutineFunction.target_type().name());
+            }
+            else if (!findedCoroutine->is_done())
+            {
+                //DMSH_DEBUG("too bad, it's not done %s", coroutineFunction.target_type().name());
                 return findedCoroutine; 
             }
         }

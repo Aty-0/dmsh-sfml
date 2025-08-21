@@ -5,8 +5,8 @@ namespace dmsh::game
     void Player::onStart()  
     {
         auto owner = getOwner();
-        owner->getTransform().setPosition({500, 500});
-        auto& shape = owner->getDrawable().create<sf::RectangleShape>();
+        owner->getTransform()->setPosition({500, 500});
+        auto& shape = owner->getDrawable()->create<sf::RectangleShape>();
         shape.setSize({30, 50});
         shape.setFillColor(sf::Color::White);
         const auto inputManager = core::InputManager::getInstance();
@@ -64,9 +64,9 @@ namespace dmsh::game
 
     void Player::onUpdate(float delta) 
     {
-        auto& transform = getOwner()->getTransform();
-        const auto pos = transform.getPosition();
-        transform.setPosition({pos.x + m_move.x * m_speed * delta, pos.y + m_move.y * m_speed * delta});
+        auto transform = getOwner()->getTransform();
+        const auto pos = transform->getPosition();
+        transform->setPosition({pos.x + m_move.x * m_speed * delta, pos.y + m_move.y * m_speed * delta});
         m_move = { 0, 0 };
     }
 
@@ -86,7 +86,7 @@ namespace dmsh::game
 
     core::coroutines::Coroutine Player::shootCoroutine()
     {     
-        m_bulletPool->pool(getOwner()->getTransform().getPosition());
+        m_bulletPool->pool(getOwner()->getTransform()->getPosition());
         co_await core::coroutines::WaitForSeconds(m_shootDuration);                                          
     }
 }

@@ -24,7 +24,7 @@ namespace dmsh::game
     void EnemyNode::onIsSelectedChanged()
     {
         auto shared = shared_from_this();
-        const auto drawable = getOwner()->getDrawable().get<sf::RectangleShape>();
+        const auto drawable = getOwner()->getDrawable()->get<sf::RectangleShape>();
         const static auto coroutineScheduler = core::coroutines::CoroutineScheduler::getInstance();
         
         coroutineScheduler->stop(m_animationCoroutine);
@@ -50,15 +50,15 @@ namespace dmsh::game
     core::coroutines::Coroutine EnemyNode::popoutAnimation()
     {
         const auto owner = getOwner();
-        auto& transform = owner->getTransform();
-        auto scale = transform.getScale();
+        auto transform = owner->getTransform();
+        auto scale = transform->getScale();
         static const auto time = core::Time::getInstance();
 
         float s = MaxNodeSize;
         while (s > 1.0f)
         {
             s -= SpeedPop * time->getDelta();
-            transform.setScale({s, s});
+            transform->setScale({s, s});
 
             co_await core::coroutines::Continue();
         }
@@ -67,13 +67,13 @@ namespace dmsh::game
     core::coroutines::Coroutine EnemyNode::popupAnimation()
     {
         const auto owner = getOwner();
-        auto& transform = owner->getTransform();
+        auto transform = owner->getTransform();
         static const auto time = core::Time::getInstance();
         float s = 1.0f;
         while (s < MaxNodeSize)
         {
             s += SpeedPop * time->getDelta();
-            transform.setScale({s, s});
+            transform->setScale({s, s});
 
             co_await core::coroutines::Continue();
         }

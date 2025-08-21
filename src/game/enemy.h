@@ -21,11 +21,11 @@ namespace dmsh::game
             {
                 auto owner = getOwner();
     
-                auto& shape = owner->getDrawable().create<sf::RectangleShape>();
+                auto& shape = owner->getDrawable()->create<sf::RectangleShape>();
                 shape.setSize({30, 50});
                 shape.setFillColor(sf::Color::White);
                 
-                owner->getTransform().setPosition({500, 200});
+                owner->getTransform()->setPosition({500, 200});
                 owner->setTag("enemy");
 
                 auto collider = owner->createComponent<core::RectangleCollider>();

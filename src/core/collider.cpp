@@ -1,15 +1,48 @@
 #include "collider.h"
 #include "gameObject.h"
 #include "debug.h"
+#include "spatialGrid.h"
 
 namespace dmsh::core
 {
-    static const auto updateRectByTransform = [](const RectangleCollider& collider)
+    static void updateCollisionGrid(std::shared_ptr<Collider> col) 
+    {
+        if (!col)
+        {
+            DMSH_ERROR("update collision grid failed");
+            return;
+        }
+
+        static const auto grid = CollisionSpatialGrid::getInstance();
+        grid->addColliderToCells(col);
+    }
+
+    void Collider::onDestroy()
+    {
+        static const auto grid = CollisionSpatialGrid::getInstance();
+        grid->removeColliderFromCells(getSelf<Collider>());
+    } 
+
+    void Collider::onStart() 
+    {
+        const auto owner = getOwner();
+        const auto transform = owner->getTransform();
+        
+        const auto self = getSelf<Collider>();
+        auto update = [self](const sf::Vector2f&) 
+        { 
+            updateCollisionGrid(self); 
+        };
+
+        transform->Signals.onPositionChanged.connect(update);
+    }
+
+    static auto updateRectByTransform(const RectangleCollider& collider)
     {
         const auto go = collider.getOwner();
         const auto transform = go->getTransform();
-        const auto pos = transform.getPosition();
-        const auto scale = transform.getScale();
+        const auto pos = transform->getPosition();
+        const auto scale = transform->getScale();
         
         auto rectUpd = collider.getRect();
         rectUpd.position.x += pos.x;
@@ -17,14 +50,23 @@ namespace dmsh::core
         rectUpd.size.x *= scale.x;
         rectUpd.size.y *= scale.y;
         return rectUpd;
-    };
+    }
     
     bool RectangleCollider::m_alwaysShowRect;
 
     bool RectangleCollider::contains(const sf::Vector2f& pos) const 
-    {                
+    {       
+        if (!getOwner()->isVisible())
+            return false;
+
         auto rect1 = updateRectByTransform(*this);
         return rect1.contains(pos);
+    }
+
+    bool RectangleCollider::intersect(const sf::FloatRect& rect) const
+    {     
+        auto rect1 = updateRectByTransform(*this);
+        return rect1.findIntersection(rect).has_value();
     }
 
     bool RectangleCollider::intersect(const Collider& collider) const
