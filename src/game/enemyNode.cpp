@@ -11,11 +11,13 @@ namespace dmsh::game
             return;
 
         const auto selected = m_nodeEditor->getSelected();
-        const auto shared = shared_from_this();
+        const auto self = getSelf<EnemyNode>();  
+
+        DMSH_DEBUG("Mouse is clicked on nothing");
         
-        if (selected == shared)
+        if (selected == self)
         {
-            DMSH_DEBUG("unselect");
+            DMSH_DEBUG("Selected it's me, unselect");
             m_isSelected = false;
             onIsSelectedChanged();
         }
@@ -23,21 +25,23 @@ namespace dmsh::game
 
     void EnemyNode::onIsSelectedChanged()
     {
-        auto shared = shared_from_this();
-        const auto drawable = getOwner()->getDrawable()->get<sf::RectangleShape>();
+        const auto self = getSelf<EnemyNode>();    
+        const auto& drawable = getOwner()->getDrawable()->get<sf::RectangleShape>();
         const static auto coroutineScheduler = core::coroutines::CoroutineScheduler::getInstance();
         
         coroutineScheduler->stop(m_animationCoroutine);
         
         if (m_isSelected)
         {
+            DMSH_DEBUG("It's selected");
             drawable->setFillColor(sf::Color::Red);        
-            m_nodeEditor->setSelected(shared); 
+            m_nodeEditor->setSelected(self); 
             
             m_animationCoroutine = coroutineScheduler->run(std::bind(&EnemyNode::popupAnimation, this));
         }
         else
         {
+            DMSH_DEBUG("It's unselected");
             drawable->setFillColor(sf::Color::White);        
             m_nodeEditor->setSelected(nullptr);             
             m_animationCoroutine = coroutineScheduler->run(std::bind(&EnemyNode::popoutAnimation, this));
@@ -86,17 +90,17 @@ namespace dmsh::game
             return;
         
         const auto selected = m_nodeEditor->getSelected();
-        const auto shared = shared_from_this();
+        const auto self = getSelf<EnemyNode>();
         
         // Unselect prev object
-        if (selected != nullptr && selected != shared)
+        if (selected != nullptr && selected != self)
         {
-            DMSH_DEBUG("remove prev");
+            DMSH_DEBUG("Unselect previous object...");
             selected->m_isSelected = false;
             selected->onIsSelectedChanged();
         }
 
-        DMSH_DEBUG("select");
+        DMSH_DEBUG("Mouse clicked on node");
         m_isSelected = true;        
         onIsSelectedChanged();
     }

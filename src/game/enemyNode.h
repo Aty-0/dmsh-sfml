@@ -7,8 +7,7 @@
 namespace dmsh::game
 {    
     class NodeEditor; 
-    class EnemyNode : public core::Component, 
-        public std::enable_shared_from_this<EnemyNode>
+    class EnemyNode : public core::Component
     { 
         public:
             EnemyNode() : 
