@@ -7,8 +7,6 @@ namespace dmsh::core
 {    
     SceneManager::~SceneManager()
     {
-        //collisionDetectedPrevFrame.clear();
-        
         m_scene.GameObjects.clear();
         m_scene.GameObjects.shrink_to_fit();
     }
@@ -51,11 +49,11 @@ namespace dmsh::core
             {
                 go->onMouseSelected(worldCoords);
 
-                if (&collidedInPrevFrame != &collider)
+                if (collidedInPrevFrame != collider)
                     collided = collider;
             }
 
-            if (&collided != &collider) 
+            if (collided != collider) 
             {
                 go->onMouseUnselected(worldCoords);
             }
