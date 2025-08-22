@@ -81,7 +81,7 @@ namespace dmsh::game
     {
         static const auto coroutineScheduler = core::coroutines::CoroutineScheduler::getInstance(); 
         if (m_canShoot)
-            m_shootCoroutine = coroutineScheduler->run(std::bind(&Player::shootCoroutine, this));
+            m_shootCoroutine = coroutineScheduler->run(std::move(std::bind(&Player::shootCoroutine, this)));
     }
 
     core::coroutines::Coroutine Player::shootCoroutine()

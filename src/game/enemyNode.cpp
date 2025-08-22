@@ -37,14 +37,14 @@ namespace dmsh::game
             drawable->setFillColor(sf::Color::Red);        
             m_nodeEditor->setSelected(self); 
             
-            m_animationCoroutine = coroutineScheduler->run(std::bind(&EnemyNode::popupAnimation, this));
+            m_animationCoroutine = coroutineScheduler->run(std::move(std::bind(&EnemyNode::popupAnimation, this)));
         }
         else
         {
             DMSH_DEBUG("It's unselected");
             drawable->setFillColor(sf::Color::White);        
             m_nodeEditor->setSelected(nullptr);             
-            m_animationCoroutine = coroutineScheduler->run(std::bind(&EnemyNode::popoutAnimation, this));
+            m_animationCoroutine = coroutineScheduler->run(std::move(std::bind(&EnemyNode::popoutAnimation, this)));
         }
     }
     

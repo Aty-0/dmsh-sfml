@@ -52,8 +52,16 @@ namespace dmsh::core::coroutines
             {
                 other.handle = nullptr;
             }
+        
+            ~Coroutine() 
+            {
+                if (handle) 
+                { 
+                    handle.destroy(); 
+                }
+            }
 
-            Coroutine& operator=(Coroutine&& other) noexcept
+            inline Coroutine& operator=(Coroutine&& other) noexcept
             {
                 if (this != &other)
                 {
@@ -64,21 +72,13 @@ namespace dmsh::core::coroutines
             
                 return *this;
             }
-        
-            ~Coroutine() 
-            {
-                if (handle) 
-                { 
-                    handle.destroy(); 
-                }
-            }
 
-            bool is_done() const
+            inline bool is_done() const
             {
                 return !handle || handle.done();
             }
 
-            void resume()
+            inline void resume()
             {
                 if (handle)
                 {
@@ -86,7 +86,7 @@ namespace dmsh::core::coroutines
                 }
             }
 
-            bool should_resume(std::chrono::high_resolution_clock::time_point now) const 
+            inline bool should_resume(std::chrono::high_resolution_clock::time_point now) const 
             {
                 return !is_done() && now >= handle.promise().resume_time;
             }
@@ -101,87 +101,19 @@ namespace dmsh::core::coroutines
             using CoroutineFunction = std::function<Coroutine()>;
             
             void update();
-            std::shared_ptr<Coroutine> run(CoroutineFunction coroutineFunction);
+            std::shared_ptr<Coroutine> run(CoroutineFunction&& coroutineFunction);
             void stop(std::shared_ptr<Coroutine> coroutinePtr);
 
         private:
             std::unordered_map<std::size_t, std::shared_ptr<Coroutine>> m_coroutines;
     };
 
-    inline void CoroutineScheduler::update()
-    {
-        auto it = m_coroutines.begin();
-        auto clock = std::chrono::high_resolution_clock::now();
-
-        while(it != m_coroutines.end())
-        {            
-            if(!it->second || it->second->is_done())       
-            {
-                //DMSH_DEBUG("is done, remove coroutine...");
-                it = m_coroutines.erase(it);                            
-            }     
-            else if (it->second->should_resume(clock))
-            {
-                it->second->resume();
-                ++it;
-            }            
-            else 
-            {
-                ++it;
-            }            
-        }
-    }
-
-    inline void CoroutineScheduler::stop(std::shared_ptr<Coroutine> coroutinePtr)
-    {
-        if (coroutinePtr == nullptr)
-        {            
-            return;
-        }
-        
-        auto find = std::find_if(m_coroutines.begin(), m_coroutines.end(), [coroutinePtr](auto it) {
-            return it.second == coroutinePtr;
-        });
-
-        if (find == m_coroutines.end())
-        {
-            DMSH_ERROR("can't find coroutine in map");
-            return;
-        }
-
-        m_coroutines.erase(find);
-        coroutinePtr = nullptr;
-    }
-
-    inline std::shared_ptr<Coroutine> CoroutineScheduler::run(CoroutineFunction coroutineFunction)
-    {
-        auto hashCode = coroutineFunction.target_type().hash_code();
-
-        // Don't start a existing coroutine if it's not done 
-        if (m_coroutines.find(hashCode) != m_coroutines.end())
-        {
-            auto findedCoroutine = m_coroutines[hashCode];
-            if (!findedCoroutine)
-            {
-                DMSH_ERROR("coroutine is finded in list, but it's empty, hm, continue %s", coroutineFunction.target_type().name());
-            }
-            else if (!findedCoroutine->is_done())
-            {
-                //DMSH_DEBUG("too bad, it's not done %s", coroutineFunction.target_type().name());
-                return findedCoroutine; 
-            }
-        }
-
-        auto coroutineShared = std::make_shared<Coroutine>(coroutineFunction());
-        m_coroutines.insert({ hashCode, coroutineShared });
-        return coroutineShared;
-    } 
 
     struct Continue
     {    
-        bool await_ready() const noexcept { return false; }
-        void await_resume() const noexcept {}    
-        void await_suspend(std::coroutine_handle<Coroutine::promise_type> handle) const noexcept {} 
+        inline bool await_ready() const noexcept { return false; }
+        inline void await_resume() const noexcept {}    
+        inline void await_suspend(std::coroutine_handle<Coroutine::promise_type> handle) const noexcept {} 
     };
 
     struct WaitForSeconds
@@ -193,9 +125,9 @@ namespace dmsh::core::coroutines
         {
             
         }
-        bool await_ready() const noexcept { return false; }
-        void await_resume() const noexcept {}    
-        void await_suspend(std::coroutine_handle<Coroutine::promise_type> handle) const noexcept 
+        inline bool await_ready() const noexcept { return false; }
+        inline void await_resume() const noexcept {}    
+        inline void await_suspend(std::coroutine_handle<Coroutine::promise_type> handle) const noexcept 
         {
             handle.promise().resume_time = std::chrono::high_resolution_clock::now() + duration;
         }        
