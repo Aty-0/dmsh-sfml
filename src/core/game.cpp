@@ -12,14 +12,34 @@
 #include "../game/nodeEditor.h"
 #include "../game/enemy.h"
 
+#define USE_BENCHMARK
+
 namespace dmsh::core
 {
+    template<typename Function, typename Owner, typename... Args>
+    inline float runBenchmark(Function&& func, Owner* owner, Args&&... args)
+    {
+        static_assert(std::is_invocable<Function, Owner, Args...>::value, "is not a invocable function...");
+
+        const auto start = std::chrono::high_resolution_clock::now();
+        std::invoke(std::forward<Function>(func), owner, std::forward<Args>(args)...);
+        const auto end = std::chrono::high_resolution_clock::now();
+        const auto ms = std::chrono::duration<float, std::milli>(end - start).count();
+        return ms; 
+    }
+
     static const auto sceneManager = SceneManager::getInstance(); 
     static const auto inputManager = InputManager::getInstance(); 
     static const auto coroutineScheduler = coroutines::CoroutineScheduler::getInstance(); 
     static const auto collisionGrid = CollisionSpatialGrid::getInstance(); 
     static const auto time = Time::getInstance();
 
+#ifdef USE_BENCHMARK
+    static float benchmarkRenderMs = 0.0f;
+    static float benchmarkUpdateMs = 0.0f;
+    static float benchmarkInputMs = 0.0f;
+    static float benchmarkPoolEventsMs = 0.0f;
+#endif
     
     // TODO: Relocate to stats class 
     static bool showDebugInfo = false;
@@ -90,12 +110,16 @@ namespace dmsh::core
             auto playerGo = sceneManager->createGameObject<GameObject>();
             playerGo->createComponent<game::Player>();
             
-            for (std::int32_t i = 0; i < 10; i++)
+            for (std::int32_t i = 0; i < 10; ++i)
             {
-                auto npc = sceneManager->createGameObject<GameObject>();
-                auto transform = npc->getTransform();
-                npc->createComponent<game::Enemy>();
-                transform->setPosition({100.0f + (i * 14), 100.0f});
+                for (std::int32_t j = 0; j < 10; ++j)
+                {
+                    auto npc = sceneManager->createGameObject<GameObject>();
+                    auto transform = npc->getTransform();
+                    npc->createComponent<game::Enemy>();
+
+                    transform->setPosition({100.0f + (j * 70), 100.0f + (i * 60)});
+                }
             }
       
         }
@@ -122,10 +146,17 @@ namespace dmsh::core
 
         while (window->isOpen())
         {
+#ifdef USE_BENCHMARK
+            benchmarkPoolEventsMs = runBenchmark(&Game::poolEvents, this, sfWindow);
+            benchmarkUpdateMs = runBenchmark(&Game::onUpdate, this, time->getDelta());
+            benchmarkInputMs = runBenchmark(&SceneManager::onInput, sceneManager, *inputManager);
+            benchmarkRenderMs = runBenchmark(&Game::onRender, this, sfWindow);
+#else
             poolEvents(sfWindow);
             sceneManager->onInput(*inputManager);
             onUpdate(time->getDelta());
             onRender(sfWindow);
+#endif
         }
     }
     
@@ -148,8 +179,13 @@ namespace dmsh::core
         coroutineScheduler->update();
         
         collisionGrid->checkCollisions();
-        
-        fpsDebugTextComp->setText("fps:{}\ndelta:{}", time->getFps(), delta);
+
+#ifdef USE_BENCHMARK
+        fpsDebugTextComp->setText("Fps:{}\nDelta:{:.4f}\nRender:{:.2f}ms\nUpdate:{:.2f}ms\nPoolEvents:{:.2f}ms\nInput:{:.2f}ms\n", 
+            time->getFps(), delta, benchmarkRenderMs, benchmarkUpdateMs, benchmarkPoolEventsMs, benchmarkInputMs);
+#else
+        fpsDebugTextComp->setText("Fps:{}\nDelta:{}", time->getFps(), delta);
+#endif
         
         if (showDebugInfo)
         {
