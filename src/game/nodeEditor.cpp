@@ -197,12 +197,15 @@ namespace dmsh::game
         auto collider = go->createComponent<core::RectangleCollider>();
         constexpr sf::Vector2f size = { 30.0f, 30.0f };
         collider->setRect(sf::FloatRect { { 0.0f, 0.0f }, size });
+        collider->setStatic(true);
         
         auto& goDrawable = go->getDrawable()->create<sf::RectangleShape>();
         goDrawable.setSize(size);
         goDrawable.setFillColor(sf::Color::White);
+        
         auto transform = go->getTransform();
         transform->setPosition(pos);
+        
         auto node = go->createComponent<EnemyNode>();
         node->m_nodeEditor = this;
         
