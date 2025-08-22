@@ -75,7 +75,11 @@ namespace dmsh::core
         for (const auto row : m_cells)
         {
             for (const auto& col : row)
-            {                
+            {       
+                // Do not add statics colliders
+                if (collider->isStatic())
+                    continue;
+
                 if (collider->intersect(col->Bounds))
                 {
                     // Add active cell to collider 
@@ -118,7 +122,7 @@ namespace dmsh::core
                 for (std::int32_t i = 0; i < cell->Colliders.size(); ++i)
                 {
                     auto& A = cell->Colliders[i];
-                    if (!A) 
+                    if (!A || A->isStatic()) 
                         continue;
                     
                     auto AGo = A->getOwner();
@@ -129,7 +133,7 @@ namespace dmsh::core
                     {
                         auto& B = cell->Colliders[j];
 
-                        if (!B) 
+                        if (!B || B->isStatic()) 
                             continue;
 
                         auto BGo = B->getOwner();
@@ -170,7 +174,7 @@ namespace dmsh::core
         } 
     }   
 
-//#define DEBUG_COLLISION_GRID_SHOW_TEXT
+#define DEBUG_COLLISION_GRID_SHOW_TEXT
     void CollisionSpatialGrid::onRender(sf::RenderWindow& window)
     {
         for (const auto row : m_cells)

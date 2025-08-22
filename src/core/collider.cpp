@@ -5,21 +5,21 @@
 
 namespace dmsh::core
 {
+    static const auto grid = CollisionSpatialGrid::getInstance();
+
     static void updateCollisionGrid(std::shared_ptr<Collider> col) 
     {
-        if (!col)
-        {
-            DMSH_ERROR("update collision grid failed");
-            return;
-        }
-
-        static const auto grid = CollisionSpatialGrid::getInstance();
+        DMSH_ASSERT(col, "update collision grid failed");
         grid->addColliderToCells(col);
+    }
+    
+    Collider::~Collider()
+    {
+        m_cells.clear();
     }
 
     void Collider::onDestroy()
     {
-        static const auto grid = CollisionSpatialGrid::getInstance();
         grid->removeColliderFromCells(getSelf<Collider>());
     } 
 

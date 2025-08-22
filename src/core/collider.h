@@ -1,7 +1,6 @@
 #pragma once
 #include "common.h"
 #include "component.h"
-
 #include <unordered_set>
 
 namespace dmsh::core
@@ -9,58 +8,79 @@ namespace dmsh::core
     // The basic cell struct which store colliders in bounds
     struct CollisionCell
     {
+        CollisionCell() = default;
+        ~CollisionCell() 
+        {
+            Colliders.clear();
+        }
+
         sf::FloatRect Bounds;
         sf::Vector2i Indices;
         std::vector<std::shared_ptr<Collider>> Colliders;
     };
 
-    struct Collider : public Component
+    class Collider : public Component
     {
-        virtual void onStart() override;
-        virtual void onDestroy() override;
-        virtual bool contains(const sf::Vector2f& pos) const { return false; }
-        virtual bool intersect(const Collider& collider) const { return false; }       
-        virtual bool intersect(const sf::FloatRect& rect) const { return false; }       
+        public:
+            Collider() = default;
+            ~Collider();
 
+            virtual void onStart() override;
+            virtual void onDestroy() override;
+            virtual bool contains(const sf::Vector2f& pos) const { return false; }
+            virtual bool intersect(const Collider& collider) const { return false; }       
+            virtual bool intersect(const sf::FloatRect& rect) const { return false; }       
+
+            inline void setStatic(bool isStatic) { m_isStatic = isStatic; }
+
+            // Static collider basicly needed for UI game object, 
+            // it will ignored by CollisionSpatialGrid, and do not call any collisionCallbacks, except mouse click callbacks
+            inline bool isStatic() const { return m_isStatic; }
+        
         private:
             friend class CollisionSpatialGrid;
-        
+
             struct ColliderTracker 
             {
+                ColliderTracker() = default;
+                ~ColliderTracker() 
+                {
+                    m_collided.clear();
+                    m_collidedInPrevFrame.clear();
+                } 
+
                 inline void addCollidedObject(std::shared_ptr<Collider> collider)
                 {
                     m_collided.insert(collider);
                 }
-                
                 inline bool isObjectCollidedPrevFrame(std::shared_ptr<Collider> collider) const
                 {
                     return m_collidedInPrevFrame.count(collider) != 0;
                 }
-
                 inline bool isObjectCollided(std::shared_ptr<Collider> collider) const
                 {
                     return m_collided.count(collider) != 0;
                 }
-                
                 inline void updateFrame()
                 {
                     m_collidedInPrevFrame = std::move(m_collided);
                     m_collided.clear();
                 }
-
+                
                 inline std::unordered_set<std::shared_ptr<Collider>> getCollided() const { return m_collided; }
                 inline std::unordered_set<std::shared_ptr<Collider>> getCollidedInPrevFrame() const { return m_collidedInPrevFrame; }
-
                 private:
                     std::unordered_set<std::shared_ptr<Collider>> m_collided;
                     std::unordered_set<std::shared_ptr<Collider>> m_collidedInPrevFrame;
             };        
-
+            
             // A storage where we are save a active cells for current collider
             std::unordered_set<std::shared_ptr<CollisionCell>> m_cells;
-
+            
             // Tracker for colliders to detect which objects has been collided with owner
-            ColliderTracker m_collisionTracker; 
+            ColliderTracker m_collisionTracker;
+
+            bool m_isStatic; 
     };
 
     // TODO: Implement triggers     

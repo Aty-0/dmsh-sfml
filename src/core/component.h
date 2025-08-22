@@ -6,7 +6,7 @@ namespace dmsh::core
 {
     class GameObject;
     class InputManager;
-    struct Collider;
+    class Collider;
     class Component 
     {    
         public:    
