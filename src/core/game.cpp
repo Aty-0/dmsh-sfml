@@ -143,7 +143,7 @@ namespace dmsh::core
             RectangleCollider::setAlwaysShowRect(!RectangleCollider::getAlwaysShowRect());
             showColliderGrid = !showColliderGrid;
         });
-
+        
         while (window->isOpen())
         {
 #ifdef USE_BENCHMARK

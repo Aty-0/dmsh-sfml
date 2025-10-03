@@ -6,5 +6,4 @@ target_include_directories(dmsh-sfml
 )
 
 target_compile_features(dmsh-sfml PRIVATE cxx_std_20)
-target_link_libraries(dmsh-sfml PRIVATE SFML::Graphics)
-target_link_libraries(dmsh-sfml PRIVATE Pal::Sigslot)
+target_link_libraries(dmsh-sfml PRIVATE SFML::Graphics Pal::Sigslot)

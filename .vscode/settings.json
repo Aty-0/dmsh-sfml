@@ -81,6 +81,13 @@
         "xstring": "cpp",
         "xtr1common": "cpp",
         "xtree": "cpp",
-        "coroutine": "cpp"
+        "coroutine": "cpp",
+        "condition_variable": "cpp",
+        "shared_mutex": "cpp",
+        "type": "cpp",
+        "future": "cpp",
+        "expected": "cpp",
+        "numeric": "cpp",
+        "regex": "cpp"
     }
 }
