@@ -7,6 +7,7 @@
 #include "text.h"
 #include "coroutine.h"
 #include "spatialGrid.h"
+#include "view.h"
 
 #include "../game/player.h"
 #include "../game/nodeEditor.h"
@@ -94,6 +95,9 @@ namespace dmsh::core
             fpsDebugTextComp->setFillColor(sf::Color::Yellow);
             fpsDebugTextComp->setSize(18);
 
+            auto fpsDebugTextTransform = fpsDebugText->getTransform();
+            fpsDebugTextTransform->setPosition({windowSize.x * 0.7f, 0});
+
             
             inputDebugText = sceneManager->createGameObject<GameObject>();            
             inputDebugText->setVisible(false);
@@ -143,9 +147,30 @@ namespace dmsh::core
             RectangleCollider::setAlwaysShowRect(!RectangleCollider::getAlwaysShowRect());
             showColliderGrid = !showColliderGrid;
         });
+
+
+        auto& gameSpaceView = getViewSpaceGame();
+        auto& view = gameSpaceView.getView();
         
+        view.setCenter({ windowSize.x * 0.5f, windowSize.y * 0.5f });
+        view.setSize(sf::Vector2f(windowSize));
+        view.setScissor({{0.0f, 0.0f}, {0.7f, 1.0f}});
+        
+        auto& uiSpaceView = getViewSpaceUI();
+        auto& uiView = uiSpaceView.getView();
+        uiView.setSize(sf::Vector2f(windowSize));
+        uiView.setCenter({ windowSize.x / 2.0f, windowSize.y / 2.0f });
+        
+
+        runLoop(window);
+    }
+    
+    void Game::runLoop(Window* window)
+    {
+        auto& sfWindow = window->getWindow();     
+
         while (window->isOpen())
-        {
+        {       
 #ifdef USE_BENCHMARK
             benchmarkPoolEventsMs = runBenchmark(&Game::poolEvents, this, sfWindow);
             benchmarkUpdateMs = runBenchmark(&Game::onUpdate, this, time->getDelta());
@@ -159,7 +184,7 @@ namespace dmsh::core
 #endif
         }
     }
-    
+
     void Game::onRender(sf::RenderWindow& window)
     {
         window.clear();

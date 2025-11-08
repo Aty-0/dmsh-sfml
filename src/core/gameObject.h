@@ -7,6 +7,7 @@
 #include "drawable.h"
 #include "transform.h"
 #include "collider.h"
+#include "view.h"
 
 #include <memory>
 
@@ -21,8 +22,9 @@ namespace dmsh::core
                 m_transform(nullptr), 
                 m_drawable(nullptr),
                 m_visible(true),
-                m_id(-1)
+                m_id(-1) // By default it's a game viewspace 
             {
+                setViewSpace(core::getViewSpaceGame());                
             }
             
             virtual ~GameObject()
@@ -69,8 +71,8 @@ namespace dmsh::core
                 for (auto component : m_components)
                 {
                     if (!component || !m_visible)
-                        continue;
-                    
+                        continue;      
+
                     component->onRender(window);
                 }
             }
@@ -163,6 +165,15 @@ namespace dmsh::core
             
             // FIXME: UUID
             inline std::int32_t getId() const { return m_id; }
+
+            inline void setViewSpace(const core::ViewSpace& view) { m_view = &view; }
+            // Get viewspace which object is using  
+            inline const core::ViewSpace& getViewSpace() const 
+            { 
+                DMSH_ASSERT(m_view, "ViewSpace is empty");
+                return *m_view; 
+            }
+
         private:
             friend class SceneManager;
             inline void initialStart()
@@ -181,6 +192,7 @@ namespace dmsh::core
                 onStart();
             }
 
+   
             bool m_visible;
             std::string m_tag;
             std::int32_t m_id;
@@ -189,7 +201,9 @@ namespace dmsh::core
             std::shared_ptr<Transform> m_transform;
 
             std::vector<std::shared_ptr<Component>> m_components;
-    
+            
+            const core::ViewSpace* m_view;
+
         public:
             template <typename T, typename... Args>
             inline std::shared_ptr<T> createComponent(Args&&... args) 

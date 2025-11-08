@@ -70,13 +70,24 @@ namespace dmsh::core
 
     void SceneManager::onRender(sf::RenderWindow& window)
     {
+        //const core::ViewSpace* prevViewspace = nullptr;
         for (std::size_t i = 0; i < m_scene.GameObjects.size(); ++i)         
         {            
             auto goWeak = m_scene.GameObjects[i];
             if (goWeak.expired())
                 continue;
+            auto goLock = goWeak.lock();
 
-            goWeak.lock()->onRender(window);
+            auto current = &goLock->getViewSpace();
+            // Do not change view if we are have the same viewspace 
+            //if (prevViewspace 
+            //    && prevViewspace != current)
+            {
+                window.setView(current->getView());
+            }
+
+            goLock->onRender(window);
+            //prevViewspace = current;
         }
     }
 

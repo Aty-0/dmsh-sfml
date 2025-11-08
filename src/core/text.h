@@ -27,6 +27,8 @@ namespace dmsh::core
                 owner->setZDepth(zDepth::UI_LAYER, true);
 
                 m_drawableText = &owner->getDrawable()->create<sf::Text>(defaultFont);            
+                
+                owner->setViewSpace(core::getViewSpaceUI());
             }
             
             inline std::string getText() const 
@@ -41,46 +43,53 @@ namespace dmsh::core
             inline void setText(std::string_view text, Args&&... args)
             {
                 if (m_drawableText != nullptr)
+                {
                     m_drawableText->setString(std::vformat(text, std::make_format_args(args...)));
+                    onTextChanged(text);
+                }
+                
             }
 
             inline void setText(std::string_view text)
             {
                 if (m_drawableText != nullptr)
+                {
                     m_drawableText->setString(std::string{ text });
+                    onTextChanged(text);
+                }
             }
 
-            inline void setFillColor(const sf::Color& color)
+            inline virtual void setFillColor(const sf::Color& color)
             {
                 if (m_drawableText != nullptr)
                     m_drawableText->setFillColor(color);
             }
 
-            inline void setOutlineColor(const sf::Color& color)
+            inline virtual void setOutlineColor(const sf::Color& color)
             {
                 if (m_drawableText != nullptr)
                     m_drawableText->setOutlineColor(color);
             }
 
-            inline void setSize(std::uint32_t size)
+            inline virtual void setSize(std::uint32_t size)
             {
                 if (m_drawableText != nullptr)
                     m_drawableText->setCharacterSize(size);
             }
 
-            inline void setLetterSpacing(float spacing)
+            inline virtual void setLetterSpacing(float spacing)
             {
                 if (m_drawableText != nullptr)
                     m_drawableText->setLetterSpacing(spacing);
             }
 
-            inline void setLineSpacing(float spacing)
+            inline virtual void setLineSpacing(float spacing)
             {
                 if (m_drawableText != nullptr)
                     m_drawableText->setLineSpacing(spacing);
             }
 
-            inline void setOutlineThickness(float thickness)
+            inline virtual void setOutlineThickness(float thickness)
             {
                 if (m_drawableText != nullptr)
                     m_drawableText->setOutlineThickness(thickness);
@@ -88,5 +97,8 @@ namespace dmsh::core
                 
         private:
             sf::Text* m_drawableText;
+        public:
+            // Args: std::string_view text -> New text 
+            sigslot::signal<std::string_view> onTextChanged;
     };
 }
