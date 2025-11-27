@@ -71,10 +71,4 @@ namespace dmsh::core
 
         return file;
     } 
-
-    
-    std::any get(const ResourceTypes& type, std::string_view name)
-    {
-        return nullptr;
-    }
 }
