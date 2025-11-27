@@ -8,6 +8,7 @@
 #include "coroutine.h"
 #include "spatialGrid.h"
 #include "view.h"
+#include "resourceManager.h"
 
 #include "../game/player.h"
 #include "../game/nodeEditor.h"
@@ -59,11 +60,14 @@ namespace dmsh::core
         const auto window = Window::getInstance();
         window->create(1280, 768, "dmsh-sfml");
         
-        auto& sfWindow = window->getWindow();     
 
+        const auto resourceManager = ResourceManager::getInstance();
+        resourceManager->init();
+        resourceManager->load<ResourceTypes::Font>("immortal.ttf", "immortal");
+        
+        auto& sfWindow = window->getWindow();     
         // TODO: If we want to change window res, we need to update this       
-        // FIXME: window size getter 
-        const auto windowSize = window->getWindow().getSize();
+        const auto windowSize = window->getSize();
         // TODO: What's size will be perfect ?? 
         const auto cellDefaultSize = sf::Vector2i(150, 150);
         const sf::Vector2i numCells = { 
@@ -159,8 +163,7 @@ namespace dmsh::core
         auto& uiSpaceView = getViewSpaceUI();
         auto& uiView = uiSpaceView.getView();
         uiView.setSize(sf::Vector2f(windowSize));
-        uiView.setCenter({ windowSize.x / 2.0f, windowSize.y / 2.0f });
-        
+        uiView.setCenter({ windowSize.x / 2.0f, windowSize.y / 2.0f });        
 
         runLoop(window);
     }

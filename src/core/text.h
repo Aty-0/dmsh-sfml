@@ -2,6 +2,7 @@
 #include "common.h"
 #include "component.h"
 #include "gameObject.h"
+#include "resourceManager.h"
 
 namespace dmsh::core
 {
@@ -20,13 +21,13 @@ namespace dmsh::core
 
             virtual void onStart() override
             {
-                // FIXME | TODO: Remove and load(get) font from resource manager or from auto generated file with resources
-                static sf::Font defaultFont("immortal.ttf");    
+                auto font = ResourceManager::getInstance()->get<ResourceTypes::Font>("immortal");
+                DMSH_ASSERT(font, "Default font is not found");
 
                 auto owner = getOwner();
                 owner->setZDepth(zDepth::UI_LAYER, true);
 
-                m_drawableText = &owner->getDrawable()->create<sf::Text>(defaultFont);            
+                m_drawableText = &owner->getDrawable()->create<sf::Text>(*font->getHandle().get());            
                 
                 owner->setViewSpace(core::getViewSpaceUI());
             }

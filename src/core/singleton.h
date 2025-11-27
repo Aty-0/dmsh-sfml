@@ -14,7 +14,7 @@ namespace dmsh::core
 		Singleton& operator=(const Singleton&) = delete;
 		Singleton& operator=(Singleton&&) = delete;
 
-		inline static T* getInstance()
+		inline static T* getInstance() 
 		{
 			static auto instance = T();
 			return &instance;
