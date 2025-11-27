@@ -78,7 +78,7 @@ namespace dmsh::core
     class ResourceManager : public Singleton<ResourceManager>
     {
         public:
-            ResourceManager();
+            ResourceManager() = default;
             ~ResourceManager();
             void init();
 
@@ -112,7 +112,7 @@ namespace dmsh::core
                     return nullptr;
                 }
 
-                auto resource = m_resources.at(name);
+                const auto resource = m_resources.at(name);
                 // Avoid nullptr resource 
                 if (!resource)
                     return nullptr;
@@ -122,7 +122,7 @@ namespace dmsh::core
 
             // Load resource from resource folder
             template<ResourceTypes Type>
-            inline void load(std::string_view path, std::string_view name)
+            inline void load(std::string_view path, std::string_view name) 
             {
                 auto dataResult = read(path, name);
                 if (!dataResult.has_value())
@@ -130,10 +130,10 @@ namespace dmsh::core
                     return;
                 }
 
-                auto data = dataResult.value();
-                auto meta = ResourceMeta { std::string(path), std::string(name), Type };
-                auto resource = std::make_shared<ResourceTrait<Type>>();
-                auto loadResult = resource->load(data.data, data.size);
+                const auto data = dataResult.value();
+                const auto meta = ResourceMeta { std::string(path), std::string(name), Type };
+                const auto resource = std::make_shared<ResourceTrait<Type>>();
+                const auto loadResult = resource->load(data.data, data.size);
                 if (!loadResult)
                 {
                     // TODO: Description
@@ -175,17 +175,32 @@ namespace dmsh::core
             return true;
         }
     };
-
+  
     template<>
-    struct ResourceTrait<ResourceTypes::Sound> : public IResource, public ResourceHandle<sf::Sound> 
+    struct ResourceTrait<ResourceTypes::Sound> : public IResource, public ResourceHandle<sf::SoundBuffer> 
     {
         virtual bool load(void* data, std::size_t size) override 
-        {            
-            sf::SoundBuffer buffer;
-            if (!buffer.loadFromMemory(data, size))
-                return false;
+        {                    
+            return m_handle->loadFromMemory(data, size);
+        }
 
-            m_handle->setBuffer(buffer);
+        virtual bool unload() override
+        {
+            m_handle.reset();
+            return true;
+        }
+    };
+
+    template<>
+    struct ResourceTrait<ResourceTypes::Json> : public IResource, public ResourceHandle<nlohmann::json> 
+    {
+        using json = nlohmann::json;
+
+        virtual bool load(void* data, std::size_t size) override 
+        {            
+            const auto& parsed = json::parse(std::string(static_cast<const char*>(data), size)); 
+            *m_handle = parsed;
+            
             return true;
         }
 
@@ -193,6 +208,11 @@ namespace dmsh::core
         {
             m_handle.reset();
             return true;
+        }
+
+        inline void dump()
+        {
+            DMSH_DEBUG(m_handle->dump().c_str());
         }
     };
 }

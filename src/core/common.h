@@ -4,3 +4,5 @@
 #include "singleton.h"
 
 #include <sigslot/signal.hpp>
+
+#include <nlohmann/json.hpp>

@@ -63,7 +63,7 @@ namespace dmsh::core
 
         const auto resourceManager = ResourceManager::getInstance();
         resourceManager->init();
-        resourceManager->load<ResourceTypes::Font>("immortal.ttf", "immortal");
+        resourceManager->load<ResourceTypes::Font>("fonts/immortal.ttf", "immortal");
         
         auto& sfWindow = window->getWindow();     
         // TODO: If we want to change window res, we need to update this       

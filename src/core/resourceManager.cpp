@@ -4,14 +4,10 @@
 
 namespace dmsh::core 
 {
-    ResourceManager::ResourceManager()
-    {
-
-    }
-
     ResourceManager::~ResourceManager()
     {
-
+        DMSH_DEBUG("Clear resources...");
+        m_resources.clear();
     }
 
     void ResourceManager::init() 
