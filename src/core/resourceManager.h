@@ -12,7 +12,7 @@ namespace dmsh::core
     static constexpr std::string_view RESOURCE_FOLDER_NAME = "gamedata";
     static constexpr std::string_view DEFAULT_RESOURCE_TABLE_NAME = "reg.json";
 
-    enum ResourceTypes
+    enum class ResourceTypes
     {
         Texture,
         Sound,
