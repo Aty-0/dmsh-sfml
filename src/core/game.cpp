@@ -30,6 +30,7 @@ namespace dmsh::core
         return ms; 
     }
 
+    static const auto soundManager = SoundManager::getInstance(); 
     static const auto sceneManager = SceneManager::getInstance(); 
     static const auto inputManager = InputManager::getInstance(); 
     static const auto coroutineScheduler = coroutines::CoroutineScheduler::getInstance(); 
@@ -39,6 +40,7 @@ namespace dmsh::core
 #ifdef USE_BENCHMARK
     static float benchmarkRenderMs = 0.0f;
     static float benchmarkUpdateMs = 0.0f;
+    static float benchmarkSoundsMs = 0.0f;
     static float benchmarkInputMs = 0.0f;
     static float benchmarkPoolEventsMs = 0.0f;
 #endif
@@ -60,11 +62,12 @@ namespace dmsh::core
         const auto window = Window::getInstance();
         window->create(1280, 768, "dmsh-sfml");
         
-
         const auto resourceManager = ResourceManager::getInstance();
         resourceManager->init();
         resourceManager->load<ResourceTypes::Font>("fonts/immortal.ttf", "immortal");
-        
+        // TODO: Remove
+        resourceManager->load<ResourceTypes::Sound>("sounds/damage00.wav", "damage");
+
         auto& sfWindow = window->getWindow();     
         // TODO: If we want to change window res, we need to update this       
         const auto windowSize = window->getSize();
@@ -152,7 +155,6 @@ namespace dmsh::core
             showColliderGrid = !showColliderGrid;
         });
 
-
         auto& gameSpaceView = getViewSpaceGame();
         auto& view = gameSpaceView.getView();
         
@@ -179,11 +181,13 @@ namespace dmsh::core
             benchmarkUpdateMs = runBenchmark(&Game::onUpdate, this, time->getDelta());
             benchmarkInputMs = runBenchmark(&SceneManager::onInput, sceneManager, *inputManager);
             benchmarkRenderMs = runBenchmark(&Game::onRender, this, sfWindow);
+            benchmarkSoundsMs = runBenchmark(&SoundManager::onUpdate, soundManager);
 #else
             poolEvents(sfWindow);
             sceneManager->onInput(*inputManager);
             onUpdate(time->getDelta());
             onRender(sfWindow);
+            soundManager->onUpdate();
 #endif
         }
     }
@@ -209,8 +213,8 @@ namespace dmsh::core
         collisionGrid->checkCollisions();
 
 #ifdef USE_BENCHMARK
-        fpsDebugTextComp->setText("Fps:{}\nDelta:{:.4f}\nRender:{:.2f}ms\nUpdate:{:.2f}ms\nPoolEvents:{:.2f}ms\nInput:{:.2f}ms\n", 
-            time->getFps(), delta, benchmarkRenderMs, benchmarkUpdateMs, benchmarkPoolEventsMs, benchmarkInputMs);
+        fpsDebugTextComp->setText("Fps:{}\nDelta:{:.4f}\nRender:{:.2f}ms\nUpdate:{:.2f}ms\nPoolEvents:{:.2f}ms\nInput:{:.2f}ms\nSounds:{:.2f}ms\nSound Count:{}", 
+            time->getFps(), delta, benchmarkRenderMs, benchmarkUpdateMs, benchmarkPoolEventsMs, benchmarkInputMs, benchmarkSoundsMs, soundManager->size());
 #else
         fpsDebugTextComp->setText("Fps:{}\nDelta:{}", time->getFps(), delta);
 #endif
