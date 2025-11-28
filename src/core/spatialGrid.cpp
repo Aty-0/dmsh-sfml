@@ -1,6 +1,7 @@
 #include "spatialGrid.h"
 #include "debug.h"
 #include "gameObject.h"
+#include "resourceManager.h"
 
 namespace dmsh::core
 {
@@ -192,8 +193,9 @@ namespace dmsh::core
 #ifdef DEBUG_COLLISION_GRID_SHOW_TEXT
                 if (cell->Colliders.size() != 0)
                 {
-                    static sf::Font defaultFont("immortal.ttf");
-                    sf::Text text(defaultFont);
+                    static const auto font = ResourceManager::getInstance()->get<ResourceTypes::Font>("immortal");
+
+                    sf::Text text(*font->getHandle());
                     text.setPosition(cell->Bounds.position);                    
                     text.setCharacterSize(10);
                     text.setFillColor(sf::Color::Cyan);
@@ -208,6 +210,7 @@ namespace dmsh::core
                     text.setString(stream.str());
                     
                     window.draw(text);
+                    stream.clear();
                 }
 #endif
             }

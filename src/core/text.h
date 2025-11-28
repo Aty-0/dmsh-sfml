@@ -21,13 +21,13 @@ namespace dmsh::core
 
             virtual void onStart() override
             {
-                auto font = ResourceManager::getInstance()->get<ResourceTypes::Font>("immortal");
+                static const auto font = ResourceManager::getInstance()->get<ResourceTypes::Font>("immortal");
                 DMSH_ASSERT(font, "Default font is not found");
 
                 auto owner = getOwner();
                 owner->setZDepth(zDepth::UI_LAYER, true);
 
-                m_drawableText = &owner->getDrawable()->create<sf::Text>(*font->getHandle().get());            
+                m_drawableText = &owner->getDrawable()->create<sf::Text>(*font->getHandle());            
                 
                 owner->setViewSpace(core::getViewSpaceUI());
             }
