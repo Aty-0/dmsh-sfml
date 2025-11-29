@@ -4,7 +4,88 @@
 #include "../core/window.h"
 
 namespace dmsh::game
-{
+{   
+    void NodeEditor::onGui()
+    {
+        ImGui::Begin("Node editor");
+        {
+            if (m_currentPattern)
+            {
+                ImGui::Text("Pattern %i", m_currentPatternIndex);
+                ImGui::Separator();
+
+                if (ImGui::Button("Prev Pattern"))
+                {
+                    switchToBackPattern();
+                }
+
+                ImGui::SameLine();
+                if (ImGui::Button("Delete Pattern"))
+                {
+                    // TODO: 
+                }
+
+                ImGui::SameLine();
+                if (ImGui::Button("Create Pattern"))
+                {                    
+                    createNewPattern();
+                }
+
+                ImGui::SameLine();
+                if (ImGui::Button("Next Pattern"))
+                {
+                    switchToNextPattern();                    
+                }
+
+                ImGui::Separator();
+                ImGui::Text(m_onEditMode ? "Edit mode" : "Creation mode");
+                if (ImGui::Button("Switch edit mode"))
+                {
+                    m_onEditMode = !m_onEditMode;
+                }
+
+                ImGui::Separator();
+                auto nodes = m_currentPattern->Nodes;
+                if (m_selected == nullptr || m_currentPattern == nullptr)
+                {
+                    ImGui::Text("Selected:None");
+                }
+                else 
+                {
+                    const auto index = static_cast<std::size_t>(std::find(nodes.begin(), nodes.end(), m_selected) - nodes.begin());
+                    const auto transform = m_selected->getOwner()->getTransform();
+                    const auto pos = transform->getPosition();
+                    ImGui::Text("Selected:%i\nPos [x:%f y:%f]", index, pos.x, pos.y);
+                }
+
+                ImGui::Separator();
+                for (std::int32_t i = 0; i < nodes.size(); ++i)
+                {
+                    auto node = nodes[i];
+                    if (node)
+                    {
+                        ImGui::Text("Node: %i", i);
+                    }
+                }            
+            }
+            else 
+            {
+                ImGui::Text("No pattern");
+            }
+
+            ImGui::Separator();
+            static std::vector<char> buffer(255);
+            ImGui::InputText("File name", buffer.data(), buffer.size());
+
+            if (ImGui::Button("Save"))
+            {
+                save(std::string_view(buffer.data(), buffer.size()));
+            }
+            ImGui::TextDisabled("Note:\nCreate pattern: key - C\nNext Pattern: key - T\nPrevious pattern: key - R\nSwitch edit mode: key - Z");
+        }
+        ImGui::End();
+    }
+
     void NodeEditor::onStart()
     {       
         const auto inputManager = core::InputManager::getInstance();
@@ -14,62 +95,31 @@ namespace dmsh::game
         inputManager->addListener("editor_switch_pattern_back", core::InputListenerType::KeyPressed, core::KeyCode::R);
         inputManager->addListener("editor_delete_node", core::InputListenerType::KeyPressed, core::KeyCode::Delete);
         inputManager->addListener("editor_create_node", core::InputListenerType::KeyPressed, core::KeyCode::L);
-        inputManager->addListener("editor_test", core::InputListenerType::KeyHold, core::KeyCode::H);
-
-        createUI();        
-        updateSelectedText();
-        
+        inputManager->addListener("editor_switch_edit_mode", core::InputListenerType::KeyPressed, core::KeyCode::Z, [this]() {
+            m_onEditMode = !m_onEditMode;
+        });
+      
         createNewPattern();
     }
 
-    void NodeEditor::createUI()
-    {
-        const auto sceneManager = core::SceneManager::getInstance();
-        auto selectedObjectTextGo = sceneManager->createGameObject<core::GameObject>();        
-        m_selectedObjectTextComp = selectedObjectTextGo->createComponent<core::Text>();
-        m_selectedObjectTextComp->setFillColor(DEFAULT_TEXT_COLOR);
-        m_selectedObjectTextComp->setSize(16);
-        auto selectedObjectTextTransform = selectedObjectTextGo->getTransform();
-        selectedObjectTextTransform->setPosition({0, 100});
-        
-        auto patternTextGo = sceneManager->createGameObject<core::GameObject>();        
-        m_patternTextComp = patternTextGo->createComponent<core::Text>();
-        m_patternTextComp->setFillColor(DEFAULT_TEXT_COLOR);
-        m_patternTextComp->setSize(16);
-        auto patternTextTransform = patternTextGo->getTransform();
-        patternTextTransform->setPosition({0, 50});
-
-        auto editModeTextGo = sceneManager->createGameObject<core::GameObject>();        
-        auto editModeTextComp = editModeTextGo->createComponent<core::Text>();
-        editModeTextComp->setFillColor(DEFAULT_TEXT_COLOR);
-        editModeTextComp->setSize(16);
-        editModeTextComp->setText(m_onEditMode ? "Edit mode" : "Creation mode");
-        
-        auto editModeTextTransform = editModeTextGo->getTransform();
-        editModeTextTransform->setPosition({0, 150});         
-
-        auto noteTextGo = sceneManager->createGameObject<core::GameObject>();        
-        auto noteTextComp = noteTextGo->createComponent<core::Text>();
-        noteTextComp->setFillColor(DEFAULT_TEXT_COLOR);
-        noteTextComp->setSize(16);
-        noteTextComp->setText("Note:\nCreate pattern: key - C\nNext Pattern: key - T\nPrevious pattern: key - R\nSwitch edit mode: key - Z");
-        
-        auto noteTextTransform = noteTextGo->getTransform();
-        noteTextTransform->setPosition({0, 550});   
-
-        const auto inputManager = core::InputManager::getInstance();
-        inputManager->addListener("editor_switch_edit_mode", core::InputListenerType::KeyPressed, core::KeyCode::Z, [this, editModeTextComp]() {
-            m_onEditMode = !m_onEditMode;
-            editModeTextComp->setText(m_onEditMode ? "Edit mode" : "Creation mode");
-        });
-    }
-    
     void NodeEditor::setVisibilityNodes(std::vector<std::shared_ptr<EnemyNode>>& nodes, bool visible)
     {
-        for (auto node : nodes)
+        for (std::int32_t i = 0; i < nodes.size(); ++i)
         {
-            node->getOwner()->setVisible(visible);
+            auto node = nodes[i];
+            if (node)
+                node->getOwner()->setVisible(visible);
         }
+    }
+
+    void NodeEditor::switchPattern()
+    {
+        // Turn off nodes in prev pattern 
+        setVisibilityNodes(m_currentPattern->Nodes, false);
+        // Set new pattern
+        m_currentPattern = m_patterns[m_currentPatternIndex];
+        // Turn on visible for current 
+        setVisibilityNodes(m_currentPattern->Nodes, true);
     }
 
     void NodeEditor::switchToNextPattern()
@@ -77,15 +127,7 @@ namespace dmsh::game
         if (!((m_currentPatternIndex + 1) >= m_patterns.size()))
         {
             m_currentPatternIndex++;
-
-            // Turn off nodes in prev pattern 
-            setVisibilityNodes(m_currentPattern->Nodes, false);
-            // Set new pattern
-            m_currentPattern = m_patterns[m_currentPatternIndex];
-            // Turn on visible for current 
-            setVisibilityNodes(m_currentPattern->Nodes, true);
-
-            updatePatternText();
+            switchPattern();
         }
     }
 
@@ -94,15 +136,7 @@ namespace dmsh::game
         if (m_currentPatternIndex > 0 && m_patterns.size() != 0)
         {
             m_currentPatternIndex--;
-
-            // Turn off nodes in prev pattern 
-            setVisibilityNodes(m_currentPattern->Nodes, false);
-            // Set new pattern
-            m_currentPattern = m_patterns[m_currentPatternIndex];
-            // Turn on visible for current 
-            setVisibilityNodes(m_currentPattern->Nodes, true);
-
-            updatePatternText();
+            switchPattern();
         }
     }
 
@@ -122,18 +156,17 @@ namespace dmsh::game
 
     void NodeEditor::onInput(core::InputManager& input) 
     {
-        if (input.isListenerActive("editor_test"))
-        {
-            DMSH_DEBUG("test");
-        }
-
         if (input.isListenerActive("editor_delete_node"))
         {
             if (m_selected)
             {
                 const static auto sceneManager = core::SceneManager::getInstance();
-                auto owner = m_selected->getOwner();                
-                std::erase(m_patterns[m_currentPatternIndex - 1]->Nodes, m_selected);
+                auto owner = m_selected->getOwner();  
+                auto index = m_currentPatternIndex;
+                if (index > 0)
+                    index--;              
+
+                std::erase(m_patterns[index]->Nodes, m_selected);
                 m_selected = nullptr; 
                 sceneManager->deleteGameObject(owner);
             }
@@ -170,12 +203,14 @@ namespace dmsh::game
             return;
 
         std::shared_ptr<EnemyNode> prev = nullptr; 
-        for (auto node : nodes)
+        for (std::int32_t i = 0; i < nodes.size(); ++i)
         {
+            auto node = nodes[i];
             if (node == nullptr) 
             {
                 continue;
             }
+
             if (prev != nullptr)
             {
                 auto currentPos = node->getOwner()->getTransform()->getPosition();
@@ -223,36 +258,44 @@ namespace dmsh::game
 
         m_currentPattern = std::make_shared<Pattern>();
         m_patterns.push_back(m_currentPattern);
-        updatePatternText();
         m_currentPatternIndex++;
     }
     
-    void NodeEditor::updatePatternText()
+    void NodeEditor::save(std::string_view name)
     {
-        if (m_currentPattern == nullptr)
+        std::vector<JsonPattern> patterns;
+        for (std::int32_t i = 0; i < m_patterns.size(); ++i)
         {
-            m_patternTextComp->setText("No pattern selected or created!");
-        }
-        else 
-        {
-            m_patternTextComp->setText("Pattern:{}", m_currentPatternIndex);
-        }
-    }
-    
-    void NodeEditor::updateSelectedText()
-    {
-        if (m_selected == nullptr || m_currentPattern == nullptr)
-        {
-            m_selectedObjectTextComp->setText("Selected:None");
-        }
-        else
-        {
-            auto nodes = m_currentPattern->Nodes;
-            const auto index = static_cast<std::size_t>(std::find(nodes.begin(), nodes.end(), m_selected) - nodes.begin());
-            const auto transform = m_selected->getOwner()->getTransform();
-            const auto pos = transform->getPosition();
-                             
-            m_selectedObjectTextComp->setText("Selected:{}\nPos [x:{} y:{}]", index, pos.x, pos.y);
+            const auto pattern = m_patterns[i];
+            if (pattern)
+            {
+                std::vector<JsonNode> jsonNodes;
+                for (std::int32_t j = 0; j < pattern->Nodes.size(); ++j)
+                {
+                    const auto node = pattern->Nodes[j];
+                    if (node)
+                    {
+                        const auto position = node->getOwner()->getTransform()->getPosition();
+                        JsonNode jsonNode {
+                           .isSelected = node->m_isSelected,
+                           .useSpline = node->m_useSpline,
+                           .isFirstNode = node->m_isFirstNode,
+                           .isEndNode = node->m_isEndNode,
+                           .x = position.x,
+                           .y = position.y
+                        };
+                        jsonNodes.push_back(jsonNode);
+                    }
+                
+                    patterns.push_back(JsonPattern {
+                        .nodes = jsonNodes
+                    });
+                }
+            }
+            
+            nlohmann::json patternJsonStructure = patterns;
+            DMSH_DEBUG(patternJsonStructure.dump().c_str());
+            // TODO: Save file
         }
     }
 }

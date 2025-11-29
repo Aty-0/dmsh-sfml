@@ -4,6 +4,7 @@
 #include "../core/collider.h"
 #include "../core/gameObject.h"
 #include "../core/sceneManager.h"
+#include "../core/resourceManager.h"
 
 namespace dmsh::game
 {
@@ -19,14 +20,18 @@ namespace dmsh::game
             virtual void onStart() override
             {
                 auto owner = getOwner();
-
-                auto& shape = owner->getDrawable()->create<sf::RectangleShape>();
-                shape.setSize({20.0f, 20.0f});
-                shape.setFillColor(sf::Color::White);
+                static const auto resourceManager = core::ResourceManager::getInstance();
+                
+                const auto bulletTexture = resourceManager->get<core::ResourceTypes::Texture>("bullet");
+                DMSH_ASSERT(bulletTexture, "bullet texture is invalid");        
+                auto& shape = owner->getDrawable()->create<sf::Sprite>(*bulletTexture->getHandle());
+                shape.setColor({150, 50, 50, 255});
 
                 owner->setTag("bullet");
+                owner->getTransform()->setScale({0.5f, 0.5f});
+
                 auto collider = owner->createComponent<core::RectangleCollider>();
-                collider->setRect(sf::FloatRect { { 0.0f, 0.0f }, { 20.0f, 20.0f } });
+                collider->setRect(sf::FloatRect { { 0.0f, 0.0f }, { 64.0f, 64.0f } });
             }
  
             virtual void onUpdate(float delta) override

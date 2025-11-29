@@ -1,15 +1,21 @@
 #include "player.h"
+#include "../core/resourceManager.h"
 
 namespace dmsh::game
 {
+    static const auto resourceManager = core::ResourceManager::getInstance();
     void Player::onStart()  
     {
         auto owner = getOwner();
         owner->getTransform()->setPosition({500, 500});
-        auto& shape = owner->getDrawable()->create<sf::RectangleShape>();
-        shape.setSize({30, 50});
-        shape.setFillColor(sf::Color::White);
+
+        const auto playerTexture = resourceManager->get<core::ResourceTypes::Texture>("player");
+        DMSH_ASSERT(playerTexture, "player texture is invalid");        
+        auto& shape = owner->getDrawable()->create<sf::Sprite>(*playerTexture->getHandle());
+        shape.setTextureRect({{0, 0}, {30, 47}});
+
         const auto inputManager = core::InputManager::getInstance();
+        inputManager->addListener("player_move_left", core::InputListenerType::KeyHold, core::KeyCode::Left);
         inputManager->addListener("player_move_left", core::InputListenerType::KeyHold, core::KeyCode::Left);
         inputManager->addListener("player_move_right", core::InputListenerType::KeyHold, core::KeyCode::Right);
         inputManager->addListener("player_move_forward", core::InputListenerType::KeyHold, core::KeyCode::Up);
@@ -19,8 +25,9 @@ namespace dmsh::game
         auto collider = owner->createComponent<core::RectangleCollider>();
         collider->setRect(sf::FloatRect { { 0.0f, 0.0f }, { 30.0f, 50.0f } });      
         
+        owner->setZDepth(100);
         owner->setTag("player");
-
+    
         m_bulletPool = std::make_shared<BulletPool>(32);
     }
     

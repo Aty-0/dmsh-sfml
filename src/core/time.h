@@ -30,6 +30,9 @@ namespace dmsh::core
                 m_deltaClock.restart();
                 return delta;
             } 
+
+            inline sf::Clock getFpsClock() const { return m_fpsClock; }    
+            inline sf::Clock getDeltaClock() const { return m_deltaClock; }    
         
         private:
             sf::Clock m_fpsClock;    

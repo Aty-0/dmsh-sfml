@@ -61,14 +61,18 @@ namespace dmsh::core
     {
         const auto window = Window::getInstance();
         window->create(1280, 768, "dmsh-sfml");
-        
         const auto resourceManager = ResourceManager::getInstance();
         resourceManager->init();
         resourceManager->load<ResourceTypes::Font>("fonts/immortal.ttf", "immortal");
         // TODO: Remove
         resourceManager->load<ResourceTypes::Sound>("sounds/damage00.wav", "damage");
+        resourceManager->load<ResourceTypes::Texture>("textures/player.png", "player");
+        resourceManager->load<ResourceTypes::Texture>("textures/enemy_1.png", "enemy_1");
+        resourceManager->load<ResourceTypes::Texture>("textures/bullet.png", "bullet");
 
         auto& sfWindow = window->getWindow();     
+        DMSH_ASSERT(ImGui::SFML::Init(sfWindow), "Failed to init sfml-imgui");
+
         // TODO: If we want to change window res, we need to update this       
         const auto windowSize = window->getSize();
         // TODO: What's size will be perfect ?? 
@@ -165,9 +169,11 @@ namespace dmsh::core
         auto& uiSpaceView = getViewSpaceUI();
         auto& uiView = uiSpaceView.getView();
         uiView.setSize(sf::Vector2f(windowSize));
-        uiView.setCenter({ windowSize.x / 2.0f, windowSize.y / 2.0f });        
+        uiView.setCenter({ windowSize.x / 2.0f, windowSize.y / 2.0f });            
 
         runLoop(window);
+        
+        ImGui::SFML::Shutdown();
     }
     
     void Game::runLoop(Window* window)
@@ -175,9 +181,10 @@ namespace dmsh::core
         auto& sfWindow = window->getWindow();     
 
         while (window->isOpen())
-        {       
+        {      
 #ifdef USE_BENCHMARK
             benchmarkPoolEventsMs = runBenchmark(&Game::poolEvents, this, sfWindow);
+            ImGui::SFML::Update(sfWindow, time->getDeltaClock().getElapsedTime());
             benchmarkUpdateMs = runBenchmark(&Game::onUpdate, this, time->getDelta());
             benchmarkInputMs = runBenchmark(&SceneManager::onInput, sceneManager, *inputManager);
             benchmarkRenderMs = runBenchmark(&Game::onRender, this, sfWindow);
@@ -199,8 +206,9 @@ namespace dmsh::core
         {
             collisionGrid->onRender(window);
         }
+        sceneManager->onRender(window);              
+        ImGui::SFML::Render(window);
 
-        sceneManager->onRender(window);        
         window.display();
     }
     
@@ -212,7 +220,7 @@ namespace dmsh::core
         
         collisionGrid->checkCollisions();
 
-#ifdef USE_BENCHMARK
+#ifdef USE_BENCHMARK        
         fpsDebugTextComp->setText("Fps:{}\nDelta:{:.4f}\nRender:{:.2f}ms\nUpdate:{:.2f}ms\nPoolEvents:{:.2f}ms\nInput:{:.2f}ms\nSounds:{:.2f}ms\nSound Count:{}", 
             time->getFps(), delta, benchmarkRenderMs, benchmarkUpdateMs, benchmarkPoolEventsMs, benchmarkInputMs, benchmarkSoundsMs, soundManager->size());
 #else
@@ -228,18 +236,16 @@ namespace dmsh::core
     
     void Game::poolEvents(sf::RenderWindow& window)
     {
-        while(true)
+        while (const auto event = window.pollEvent())
         {
-            const auto event = window.pollEvent();
-            if (!event.has_value())
-                break;
-                
-            const auto pureEvent = event.value();
-            if (pureEvent.is<sf::Event::Closed>())
+            const auto pureEvent = *event;
+            ImGui::SFML::ProcessEvent(window, pureEvent);
+            
+            if (pureEvent.is<sf::Event::Closed>())   
             {
                 onClose();
                 break;
-            }
+            }         
 
             inputManager->process(pureEvent);
         }
@@ -247,7 +253,7 @@ namespace dmsh::core
 
     void Game::onClose()
     {
-        DMSH_DEBUG("Close game");
+        DMSH_DEBUG("Close game");          
         const auto window = Window::getInstance();        
         window->close();
     }

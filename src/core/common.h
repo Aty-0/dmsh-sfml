@@ -6,3 +6,6 @@
 #include <sigslot/signal.hpp>
 
 #include <nlohmann/json.hpp>
+
+#include <imgui-SFML.h>
+#include <imgui.h>

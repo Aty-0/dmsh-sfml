@@ -85,6 +85,7 @@ namespace dmsh::core
                         continue;
                     
                     component->onUpdate(delta);
+                    component->onGui();
                 }
             }
 
