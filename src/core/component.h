@@ -22,6 +22,7 @@ namespace dmsh::core
                 return m_owner; 
             }
 
+            virtual void onGui() {} 
             virtual void onStart() {} 
             virtual void onDestroy() {} 
             virtual void onInput(InputManager& input) {}
