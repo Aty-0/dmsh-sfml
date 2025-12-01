@@ -21,7 +21,6 @@ namespace dmsh::core
 
     std::optional<ResourceManager::FileData> ResourceManager::read(std::string_view path, std::string_view name)
     {
-        // TODO: Do we need to check file on exist ? 
         DMSH_DEBUG("Load file %s", path.data());
 
         auto result = getFile(path);
@@ -29,7 +28,7 @@ namespace dmsh::core
             return std::nullopt;
 
         auto& file = result.value();
-        std::size_t size = file.tellg();
+        auto size = file.tellg();
 		file.seekg(0, std::ios::beg);
 		
 		auto buffer = new char[size + 1];
