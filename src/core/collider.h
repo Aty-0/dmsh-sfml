@@ -89,7 +89,7 @@ namespace dmsh::core
         virtual bool contains(const sf::Vector2f& pos) const override;
         virtual bool intersect(const Collider& collider) const override;        
         virtual bool intersect(const sf::FloatRect& rect) const override;       
-        virtual void onRender(sf::RenderWindow& window) override;
+        virtual void onRender(sf::RenderTarget& window) override;
 
         inline sf::FloatRect getRect() const { return m_rect; } 
         inline void setRect(const sf::FloatRect& rect) { m_rect = rect; }

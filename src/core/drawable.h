@@ -7,13 +7,12 @@ namespace dmsh::core
 {
     struct Drawable : public Component
     {  
-        // TODO: Custom render states
-        virtual void onRender(sf::RenderWindow& window) override
+        virtual void onRender(sf::RenderTarget& window) override
         {
             if (m_drawable == nullptr)
                 return;
             
-            window.draw(*m_drawable);
+            window.draw(*m_drawable, m_states);
         }
         
         template<typename T, typename... Args>
@@ -23,6 +22,8 @@ namespace dmsh::core
             static_assert(!std::is_base_of<T, sf::Drawable>::value && !std::is_base_of<T, sf::Transformable>::value, "Not a drawable based class");
             m_drawable = std::make_shared<T>(std::forward<Args>(args)...);
             m_transformable = std::dynamic_pointer_cast<sf::Transformable>(m_drawable);
+            m_states = sf::RenderStates::Default;
+
             DMSH_ASSERT(m_transformable, "bad transformable cast");
             return *std::dynamic_pointer_cast<T>(m_drawable);
         } 
@@ -60,7 +61,18 @@ namespace dmsh::core
 
             return std::dynamic_pointer_cast<T>(m_drawable); 
         } 
+
+        inline void setRenderStates(const sf::RenderStates& states)
+        {
+            m_states = states;
+        }
+        inline sf::RenderStates& getRenderStates() { return m_states; } 
+        inline void setShader(const sf::Shader& shader) 
+        {
+            m_states.shader = &shader;
+        }
         private:
+        	sf::RenderStates m_states;
             std::shared_ptr<sf::Drawable> m_drawable;
             std::shared_ptr<sf::Transformable> m_transformable;
     };

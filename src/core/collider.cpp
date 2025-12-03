@@ -89,7 +89,7 @@ namespace dmsh::core
         return rect1.findIntersection(rect2).has_value();
     }
 
-    void RectangleCollider::onRender(sf::RenderWindow& window) 
+    void RectangleCollider::onRender(sf::RenderTarget& window) 
     {
         if (m_showRect || m_alwaysShowRect)
         {

@@ -66,7 +66,7 @@ namespace dmsh::core
                 }
             }
             
-            virtual void onRender(sf::RenderWindow& window) 
+            virtual void onRender(sf::RenderTarget& window) 
             {
                 for (auto component : m_components)
                 {

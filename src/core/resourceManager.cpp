@@ -28,7 +28,7 @@ namespace dmsh::core
             return std::nullopt;
 
         auto& file = result.value();
-        auto size = file.tellg();
+        const std::size_t size = file.tellg();
 		file.seekg(0, std::ios::beg);
 		
 		auto buffer = new char[size + 1];

@@ -73,7 +73,7 @@ namespace dmsh::game
             virtual void onGui() override;
             virtual void onStart() override;
             virtual void onInput(core::InputManager& input) override;            
-            virtual void onRender(sf::RenderWindow& window) override;            
+            virtual void onRender(sf::RenderTarget& window) override;            
             virtual void onMouseClicked(const sf::Vector2f& pos) override;
 
             inline bool isOnEditMode() const { return m_onEditMode; }

@@ -5,6 +5,12 @@
 
 namespace dmsh::game
 {
+    void EnemyNode::onStart() 
+    {
+        //auto owner = getOwner();
+        //owner->setViewSpace(game::getViewSpaceEditor());   
+    }
+    
     void EnemyNode::onMouseUnselected(const sf::Vector2f& pos)
     {
         if (!m_nodeEditor->isOnEditMode())
@@ -26,7 +32,7 @@ namespace dmsh::game
     void EnemyNode::onIsSelectedChanged()
     {
         const auto self = getSelf<EnemyNode>();    
-        const auto& drawable = getOwner()->getDrawable()->get<sf::RectangleShape>();
+        const auto& drawable = getOwner()->getDrawable()->get<sf::Sprite>();
         const static auto coroutineScheduler = core::coroutines::CoroutineScheduler::getInstance();
         
         coroutineScheduler->stop(m_animationCoroutine);
@@ -34,7 +40,7 @@ namespace dmsh::game
         if (m_isSelected)
         {
             DMSH_DEBUG("It's selected");
-            drawable->setFillColor(sf::Color::Red);        
+            drawable->setColor(sf::Color::Red);        
             m_nodeEditor->setSelected(self); 
             
             m_animationCoroutine = coroutineScheduler->run(std::move(std::bind(&EnemyNode::popupAnimation, this)));
@@ -42,7 +48,7 @@ namespace dmsh::game
         else
         {
             DMSH_DEBUG("It's unselected");
-            drawable->setFillColor(sf::Color::White);        
+            drawable->setColor(sf::Color::White);        
             m_nodeEditor->setSelected(nullptr);             
             m_animationCoroutine = coroutineScheduler->run(std::move(std::bind(&EnemyNode::popoutAnimation, this)));
         }

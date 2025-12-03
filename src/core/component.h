@@ -26,7 +26,7 @@ namespace dmsh::core
             virtual void onStart() {} 
             virtual void onDestroy() {} 
             virtual void onInput(InputManager& input) {}
-            virtual void onRender(sf::RenderWindow& window) {} 
+            virtual void onRender(sf::RenderTarget& window) {} 
             virtual void onUpdate(float delta) {}
             virtual void onMouseUnselected(const sf::Vector2f& pos) {}
             virtual void onMouseSelected(const sf::Vector2f& pos) {}

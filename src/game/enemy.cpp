@@ -47,8 +47,8 @@ namespace dmsh::game
             if (tag == "bullet")                    
                 collider.getOwner()->setVisible(false);
             
-            //static const auto sceneManager = core::SceneManager::getInstance();
-            //sceneManager->deleteGameObject(getOwner());
+            static const auto sceneManager = core::SceneManager::getInstance();
+            sceneManager->deleteGameObject(getOwner());
         }
     }       
 }

@@ -9,6 +9,7 @@
 #include "spatialGrid.h"
 #include "view.h"
 #include "resourceManager.h"
+#include "postEffects.h"
 
 #include "../game/player.h"
 #include "../game/nodeEditor.h"
@@ -30,6 +31,7 @@ namespace dmsh::core
         return ms; 
     }
 
+    static const auto postEffectManager = PostEffectManager::getInstance(); 
     static const auto soundManager = SoundManager::getInstance(); 
     static const auto sceneManager = SceneManager::getInstance(); 
     static const auto inputManager = InputManager::getInstance(); 
@@ -57,24 +59,46 @@ namespace dmsh::core
     static std::shared_ptr<Text> fpsDebugTextComp;    
     static std::shared_ptr<Text> inputDebugTextComp;
     
+    static std::shared_ptr<sf::Shader> grainShader;
+    static std::shared_ptr<sf::Shader> chromaticAbShader;
+    
     void Game::run()
     {
+        DMSH_ASSERT(sf::Shader::isAvailable(), "Shaders are not available!");
+        DMSH_ASSERT(sf::Shader::isGeometryAvailable(), "Geom shaders are not available!");
         const auto window = Window::getInstance();
         window->create(1280, 768, "dmsh-sfml");
+        auto& sfWindow = window->getWindow();     
+        DMSH_ASSERT(ImGui::SFML::Init(sfWindow), "Failed to init sfml-imgui");
+
         const auto resourceManager = ResourceManager::getInstance();
         resourceManager->init();
         resourceManager->load<ResourceTypes::Font>("fonts/immortal.ttf", "immortal");
         // TODO: Remove
         resourceManager->load<ResourceTypes::Sound>("sounds/damage00.wav", "damage");
+        resourceManager->load<ResourceTypes::Texture>("textures/node.png", "node");
         resourceManager->load<ResourceTypes::Texture>("textures/player.png", "player");
         resourceManager->load<ResourceTypes::Texture>("textures/enemy_1.png", "enemy_1");
         resourceManager->load<ResourceTypes::Texture>("textures/bullet.png", "bullet");
 
-        auto& sfWindow = window->getWindow();     
-        DMSH_ASSERT(ImGui::SFML::Init(sfWindow), "Failed to init sfml-imgui");
+        resourceManager->load<ResourceTypes::Shader>("shaders/grain.frag", "grain", sf::Shader::Type::Fragment);
+        resourceManager->load<ResourceTypes::Shader>("shaders/pt.frag", "pt", sf::Shader::Type::Fragment);
+        resourceManager->load<ResourceTypes::Shader>("shaders/ca.frag", "ca", sf::Shader::Type::Fragment);
+
+        auto grainShaderResource = ResourceManager::getInstance()->get<ResourceTypes::Shader>("grain");
+        DMSH_ASSERT(grainShaderResource, "Failed to load grain shader");
+        grainShader = grainShaderResource->getHandle();
+        
+        auto caShaderResource = ResourceManager::getInstance()->get<ResourceTypes::Shader>("ca");
+        DMSH_ASSERT(caShaderResource, "Failed to load chromatic aberration shader");
+        chromaticAbShader = caShaderResource->getHandle();
+
+        const auto windowSize = window->getSize();        
+        postEffectManager->createCanvas(windowSize);
+        postEffectManager->create(windowSize, grainShader);
+        postEffectManager->create(windowSize, chromaticAbShader);
 
         // TODO: If we want to change window res, we need to update this       
-        const auto windowSize = window->getSize();
         // TODO: What's size will be perfect ?? 
         const auto cellDefaultSize = sf::Vector2i(150, 150);
         const sf::Vector2i numCells = { 
@@ -108,8 +132,7 @@ namespace dmsh::core
 
             auto fpsDebugTextTransform = fpsDebugText->getTransform();
             fpsDebugTextTransform->setPosition({windowSize.x * 0.7f, 0});
-
-            
+          
             inputDebugText = sceneManager->createGameObject<GameObject>();            
             inputDebugText->setVisible(false);
             inputDebugTextComp = inputDebugText->createComponent<Text>();
@@ -153,6 +176,10 @@ namespace dmsh::core
         inputManager->addListener("engine_scene_on_mouse_clicked", core::InputListenerType::KeyPressed, core::MouseButtons::Left, [&]() {
             sceneManager->onMouseClicked(sfWindow);
         });
+
+        inputManager->addListener("engine_switch_posteffects", core::InputListenerType::KeyPressed, core::KeyCode::F8, [&]() {
+            postEffectManager->setEnable(!postEffectManager->isEnable());
+        });
         
         inputManager->addListener("engine_show_colliders", core::InputListenerType::KeyPressed, core::KeyCode::F9, [&]() {
             RectangleCollider::setAlwaysShowRect(!RectangleCollider::getAlwaysShowRect());
@@ -170,7 +197,7 @@ namespace dmsh::core
         auto& uiView = uiSpaceView.getView();
         uiView.setSize(sf::Vector2f(windowSize));
         uiView.setCenter({ windowSize.x / 2.0f, windowSize.y / 2.0f });            
-
+        
         runLoop(window);
         
         ImGui::SFML::Shutdown();
@@ -182,6 +209,7 @@ namespace dmsh::core
 
         while (window->isOpen())
         {      
+            time->update();
 #ifdef USE_BENCHMARK
             benchmarkPoolEventsMs = runBenchmark(&Game::poolEvents, this, sfWindow);
             ImGui::SFML::Update(sfWindow, time->getDeltaClock().getElapsedTime());
@@ -200,15 +228,29 @@ namespace dmsh::core
     }
 
     void Game::onRender(sf::RenderWindow& window)
-    {
-        window.clear();
-        if (showColliderGrid)
+    {          
+        // Passing scene to PEM
+        if (postEffectManager->isEnable())
         {
-            collisionGrid->onRender(window);
-        }
-        sceneManager->onRender(window);              
-        ImGui::SFML::Render(window);
+            auto target = postEffectManager->begin();
+            sceneManager->onRender(*target);              
+            postEffectManager->end();
+        }      
 
+        window.clear();
+        // Scene drawaing 
+        {
+            if (!postEffectManager->isEnable())
+                sceneManager->onRender(window);
+            else 
+                postEffectManager->draw(window);
+        }
+
+        // Debug collision grid 
+        if (showColliderGrid)        
+            collisionGrid->onRender(window);
+                
+        ImGui::SFML::Render(window);
         window.display();
     }
     
@@ -221,9 +263,9 @@ namespace dmsh::core
         collisionGrid->checkCollisions();
 
 #ifdef USE_BENCHMARK        
-        fpsDebugTextComp->setText("Fps:{}\nDelta:{:.4f}\nRender:{:.2f}ms\nUpdate:{:.2f}ms\nPoolEvents:{:.2f}ms\nInput:{:.2f}ms\nSounds:{:.2f}ms\nSound Count:{}", 
-            time->getFps(), delta, benchmarkRenderMs, benchmarkUpdateMs, benchmarkPoolEventsMs, benchmarkInputMs, benchmarkSoundsMs, soundManager->size());
-#else
+        fpsDebugTextComp->setText("Fps:{}\nDelta:{:.4f}\nTime:{:.4f}\nRender:{:.2f}ms\nUpdate:{:.2f}ms\nPoolEvents:{:.2f}ms\nInput:{:.2f}ms\nSounds:{:.2f}ms\nSound Count:{}", 
+            time->getFps(), delta, time->getTime(), benchmarkRenderMs, benchmarkUpdateMs, benchmarkPoolEventsMs, benchmarkInputMs, benchmarkSoundsMs, soundManager->size());
+#else^
         fpsDebugTextComp->setText("Fps:{}\nDelta:{}", time->getFps(), delta);
 #endif
         

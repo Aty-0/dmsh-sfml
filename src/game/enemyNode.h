@@ -17,6 +17,7 @@ namespace dmsh::game
                 
             }
             
+            virtual void onStart() override;
             virtual void onMouseUnselected(const sf::Vector2f& pos) override;
             virtual void onMouseSelected(const sf::Vector2f& pos) override;
         private:

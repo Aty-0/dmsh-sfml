@@ -176,7 +176,7 @@ namespace dmsh::core
     }   
 
 #define DEBUG_COLLISION_GRID_SHOW_TEXT
-    void CollisionSpatialGrid::onRender(sf::RenderWindow& window)
+    void CollisionSpatialGrid::onRender(sf::RenderTarget& window)
     {
         for (const auto row : m_cells)
         {

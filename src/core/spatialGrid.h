@@ -28,7 +28,7 @@ namespace dmsh::core
             
             // Debug purpose only, draw grid
             // White cell it's a empty cell, red not empty  
-            void onRender(sf::RenderWindow& window);
+            void onRender(sf::RenderTarget& window);
 
             // Check collisions on each cell
             void checkCollisions();

@@ -6,7 +6,7 @@ namespace dmsh::core::debug
     class Line
     {
         public:
-            static void draw(sf::RenderWindow& window, const sf::Vector2f& first, const sf::Vector2f& end, const sf::Color& color) 
+            static void draw(sf::RenderTarget& window, const sf::Vector2f& first, const sf::Vector2f& end, const sf::Color& color) 
             {
                 const sf::Vertex line[] =
                 {
@@ -21,7 +21,7 @@ namespace dmsh::core::debug
     class Square
     {
         public:
-            static void draw(sf::RenderWindow& window, const sf::Vector2f& pos, const sf::Vector2f size, const sf::Color& color) 
+            static void draw(sf::RenderTarget& window, const sf::Vector2f& pos, const sf::Vector2f size, const sf::Color& color) 
             {
                 const sf::Vertex square[] =
                 {

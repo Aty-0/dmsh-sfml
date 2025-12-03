@@ -21,9 +21,8 @@ namespace dmsh::core
             
             void onInput(InputManager& input);
             void onMouseClicked(sf::RenderWindow& window);
-            void onRender(sf::RenderWindow& window);
+            void onRender(sf::RenderTarget& window);
             void onUpdate(float delta);
-            
             void set(Scene&& scene);            
             void rebuildZOrdering();
 

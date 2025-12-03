@@ -68,7 +68,7 @@ namespace dmsh::core
         m_scene = std::move(scene);
     }
 
-    void SceneManager::onRender(sf::RenderWindow& window)
+    void SceneManager::onRender(sf::RenderTarget& window)
     {
         //const core::ViewSpace* prevViewspace = nullptr;
         for (std::size_t i = 0; i < m_scene.GameObjects.size(); ++i)         

@@ -6,36 +6,19 @@ namespace dmsh::core
     class Time : public Singleton<Time>
     {
         public:
-            inline std::int32_t getFps() 
-            {
-                static std::int32_t frames = 0;
-                static std::int32_t lastFrameCount = 0;
-                
-                frames++;
-                if (m_fpsClock.getElapsedTime() >= sf::seconds(1))
-                {
-                    lastFrameCount = frames;
-                    frames = 0;
-                    m_fpsClock.restart();
-                    return lastFrameCount;
-                }
-                
-                return lastFrameCount;
-            }
+            void update();
 
-            inline float getDelta()  
-            { 
-                static float delta = 0.0f;
-                delta = m_deltaClock.getElapsedTime().asSeconds();
-                m_deltaClock.restart();
-                return delta;
-            } 
-
+            inline std::int32_t getFps() const { return m_lastFrameCount; }
+            inline float getDelta() const { return m_delta; }
+            inline float getTime() const { return m_time; }
             inline sf::Clock getFpsClock() const { return m_fpsClock; }    
             inline sf::Clock getDeltaClock() const { return m_deltaClock; }    
-        
+
         private:
             sf::Clock m_fpsClock;    
-            sf::Clock m_deltaClock;    
+            sf::Clock m_deltaClock;
+            float m_delta;
+            float m_time;
+            std::int32_t m_lastFrameCount;    
     };
 }

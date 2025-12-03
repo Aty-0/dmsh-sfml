@@ -193,7 +193,7 @@ namespace dmsh::game
         }
     }
 
-    void NodeEditor::onRender(sf::RenderWindow& window)
+    void NodeEditor::onRender(sf::RenderTarget& window)
     {                
         if (m_currentPattern == nullptr)
             return;
@@ -234,10 +234,11 @@ namespace dmsh::game
         collider->setRect(sf::FloatRect { { 0.0f, 0.0f }, size });
         collider->setStatic(true);
         
-        auto& goDrawable = go->getDrawable()->create<sf::RectangleShape>();
-        goDrawable.setSize(size);
-        goDrawable.setFillColor(sf::Color::White);
-        
+        static const auto resourceManager = core::ResourceManager::getInstance();          
+        const auto nodeTexture = resourceManager->get<core::ResourceTypes::Texture>("node");
+        DMSH_ASSERT(nodeTexture, "node texture is invalid");        
+        auto& goDrawable = go->getDrawable()->create<sf::Sprite>(*nodeTexture->getHandle());        
+
         auto transform = go->getTransform();
         transform->setPosition(pos);
         
