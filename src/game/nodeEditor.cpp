@@ -5,6 +5,8 @@
 
 namespace dmsh::game
 {   
+    static const auto resourceManager = core::ResourceManager::getInstance();          
+
     void NodeEditor::onGui()
     {
         ImGui::Begin("Node editor");
@@ -39,11 +41,6 @@ namespace dmsh::game
 
                 ImGui::Separator();
                 ImGui::Text(m_onEditMode ? "Edit mode" : "Creation mode");
-                if (ImGui::Button("Switch edit mode"))
-                {
-                    m_onEditMode = !m_onEditMode;
-                }
-
                 ImGui::Separator();
                 auto nodes = m_currentPattern->Nodes;
                 if (m_selected == nullptr || m_currentPattern == nullptr)
@@ -79,9 +76,9 @@ namespace dmsh::game
 
             if (ImGui::Button("Save"))
             {
-                save(std::string_view(buffer.data(), buffer.size()));
+                save(std::string_view(buffer.data(), std::strlen(buffer.data())));
             }
-            ImGui::TextDisabled("Note:\nCreate pattern: key - C\nNext Pattern: key - T\nPrevious pattern: key - R\nSwitch edit mode: key - Z");
+            ImGui::TextDisabled("Note:\nCreate pattern: key - C\nNext Pattern: key - T\nPrevious pattern: key - R\nHold shift to switch to create mode.");
         }
         ImGui::End();
     }
@@ -95,9 +92,7 @@ namespace dmsh::game
         inputManager->addListener("editor_switch_pattern_back", core::InputListenerType::KeyPressed, core::KeyCode::R);
         inputManager->addListener("editor_delete_node", core::InputListenerType::KeyPressed, core::KeyCode::Delete);
         inputManager->addListener("editor_create_node", core::InputListenerType::KeyPressed, core::KeyCode::L);
-        inputManager->addListener("editor_switch_edit_mode", core::InputListenerType::KeyPressed, core::KeyCode::Z, [this]() {
-            m_onEditMode = !m_onEditMode;
-        });
+        inputManager->addListener("editor_switch_edit_mode", core::InputListenerType::KeyHold, core::KeyCode::LShift);
       
         createNewPattern();
     }
@@ -191,6 +186,8 @@ namespace dmsh::game
         {
             switchToBackPattern();
         }
+
+        m_onEditMode = !input.isListenerActive("editor_switch_edit_mode");
     }
 
     void NodeEditor::onRender(sf::RenderTarget& window)
@@ -234,7 +231,6 @@ namespace dmsh::game
         collider->setRect(sf::FloatRect { { 0.0f, 0.0f }, size });
         collider->setStatic(true);
         
-        static const auto resourceManager = core::ResourceManager::getInstance();          
         const auto nodeTexture = resourceManager->get<core::ResourceTypes::Texture>("node");
         DMSH_ASSERT(nodeTexture, "node texture is invalid");        
         auto& goDrawable = go->getDrawable()->create<sf::Sprite>(*nodeTexture->getHandle());        
@@ -295,8 +291,7 @@ namespace dmsh::game
             }
             
             nlohmann::json patternJsonStructure = patterns;
-            DMSH_DEBUG(patternJsonStructure.dump().c_str());
-            // TODO: Save file
+            resourceManager->save(std::format("patterns/{}.json", name), patternJsonStructure.dump(4).data());
         }
     }
 }

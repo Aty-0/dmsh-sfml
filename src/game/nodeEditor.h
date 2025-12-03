@@ -65,7 +65,7 @@ namespace dmsh::game
         public:
             NodeEditor() : 
                 m_currentPatternIndex(0), 
-                m_onEditMode(false)                
+                m_onEditMode(true)                
             {            
    
             }  

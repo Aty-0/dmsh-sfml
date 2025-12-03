@@ -81,7 +81,8 @@ namespace dmsh::core
 
             // Get raw file from resource folder 
             std::optional<std::ifstream> getFile(std::string_view path);        
-
+            bool save(std::string_view path, char* data);
+            
             // Check file on exist in resource folder 
             inline bool checkFileOnExist(std::string_view path) 
             {

@@ -19,6 +19,28 @@ namespace dmsh::core
         // TODO: Load resource table and then load other resources 
     }
 
+    bool ResourceManager::save(std::string_view path, char* data)
+    {
+        std::ofstream file;
+        const auto finalPath = std::format("{}/{}", RESOURCE_FOLDER_NAME, path);
+        DMSH_DEBUG("Saving file %s", finalPath.data());
+
+        try
+        {
+            file.open(finalPath,  std::ios::binary | std::ios::trunc);
+        }
+        catch (std::ios_base::failure& e) 
+        {
+            DMSH_ERROR("Can't open file! Code: %i", e.code().value());            
+            return false;
+        }
+
+        file << data;
+        file.close();
+
+        return true;
+    }
+
     std::optional<ResourceManager::FileData> ResourceManager::read(std::string_view path, std::string_view name)
     {
         DMSH_DEBUG("Load file %s", path.data());
