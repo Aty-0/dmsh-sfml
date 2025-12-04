@@ -189,7 +189,7 @@ namespace dmsh::core
                 }
 
                 const auto color = cell->Colliders.size() == 0 ? sf::Color::White : sf::Color::Red;
-                debug::Square::draw(window, static_cast<sf::Vector2f>(cell->Bounds.position), cell->Bounds.size * 0.95f, color);
+                debug::Debug<debug::DebugRenderType::Square>::draw(window, static_cast<sf::Vector2f>(cell->Bounds.position), cell->Bounds.size * 0.95f, color);
 #ifdef DEBUG_COLLISION_GRID_SHOW_TEXT
                 if (cell->Colliders.size() != 0)
                 {

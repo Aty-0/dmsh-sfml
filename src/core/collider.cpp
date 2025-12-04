@@ -94,7 +94,7 @@ namespace dmsh::core
         if (m_showRect || m_alwaysShowRect)
         {
             auto rect = updateRectByTransform(*this);
-            debug::Square::draw(window, rect.position, rect.size, sf::Color::Magenta);
+            debug::Debug<debug::DebugRenderType::Square>::draw(window, rect.position, rect.size, sf::Color::Magenta);
         }
     }
         

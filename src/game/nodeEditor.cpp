@@ -291,7 +291,7 @@ namespace dmsh::game
             {
                 auto currentPos = node->getOwner()->getTransform()->getPosition();
                 auto prevPos = prev->getOwner()->getTransform()->getPosition();
-                core::debug::Line::draw(window, currentPos, prevPos, sf::Color::White);
+                core::debug::Debug<core::debug::DebugRenderType::Arrow>::draw(window, prevPos, currentPos, sf::Color::White);
             }
             prev = node;
         }     
