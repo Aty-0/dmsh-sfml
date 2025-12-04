@@ -13,6 +13,7 @@
 
 #include "../game/player.h"
 #include "../game/nodeEditor.h"
+#include "../game/stageLoader.h"
 #include "../game/enemy.h"
 
 #define USE_BENCHMARK
@@ -143,7 +144,10 @@ namespace dmsh::core
             inputDebugTextTransform->setPosition({500, 100});
             
             auto nodeEditor = sceneManager->createGameObject<GameObject>();
-            nodeEditor->createComponent<game::NodeEditor>();
+            auto nodeEditorComp = nodeEditor->createComponent<game::NodeEditor>();
+
+            const auto stageLoader = game::StageLoader::getInstance();
+            stageLoader->setNodeEditorComponentPtr(nodeEditorComp);
 
             auto playerGo = sceneManager->createGameObject<GameObject>();
             playerGo->createComponent<game::Player>();
@@ -158,8 +162,7 @@ namespace dmsh::core
 
                     transform->setPosition({100.0f + (j * 70), 100.0f + (i * 60)});
                 }
-            }
-      
+            }            
         }
 
         sceneManager->rebuildZOrdering();

@@ -59,13 +59,21 @@ namespace dmsh::game
     }
 
     //NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(JsonPattern, nodes);
-
+    class StageLoader;
     class NodeEditor : public core::Component
     {
         public:
+            friend StageLoader;
+            
+            enum class EditorMode
+            {
+                Creation,
+                Edit,
+            };
+
             NodeEditor() : 
                 m_currentPatternIndex(0), 
-                m_onEditMode(true)                
+                m_editorMode(EditorMode::Edit)                
             {            
    
             }  
@@ -76,7 +84,7 @@ namespace dmsh::game
             virtual void onRender(sf::RenderTarget& window) override;            
             virtual void onMouseClicked(const sf::Vector2f& pos) override;
 
-            inline bool isOnEditMode() const { return m_onEditMode; }
+            inline EditorMode getEditorMode() const { return m_editorMode; }
             inline std::shared_ptr<EnemyNode> getSelected() const { return m_selected; }
             
             inline void setSelected(std::shared_ptr<EnemyNode> node) 
@@ -85,6 +93,11 @@ namespace dmsh::game
             }
 
         private:
+            void createNodeByJsonNode(JsonNode jsonNode);
+            std::shared_ptr<EnemyNode> createNode();
+            void deleteNode(std::shared_ptr<EnemyNode> node);
+            
+            void clear();
             void save(std::string_view name);
             void createNewPattern();            
             void switchPattern();
@@ -98,7 +111,7 @@ namespace dmsh::game
             std::vector<std::shared_ptr<Pattern>> m_patterns;
             
             std::shared_ptr<EnemyNode> m_selected;
-            bool m_onEditMode;
+            EditorMode m_editorMode;
             
             const sf::Color DEFAULT_TEXT_COLOR = sf::Color(255, 255, 255, 150);
     };

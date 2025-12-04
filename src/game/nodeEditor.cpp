@@ -1,4 +1,6 @@
 #include "nodeEditor.h"
+#include "stageLoader.h"
+
 #include "../core/inputManager.h"
 #include "../core/debug.h"
 #include "../core/window.h"
@@ -13,7 +15,7 @@ namespace dmsh::game
         {
             if (m_currentPattern)
             {
-                ImGui::Text("Pattern %i", m_currentPatternIndex);
+                ImGui::Text("Pattern %i", (m_currentPatternIndex - 1));
                 ImGui::Separator();
 
                 if (ImGui::Button("Prev Pattern"))
@@ -40,10 +42,33 @@ namespace dmsh::game
                 }
 
                 ImGui::Separator();
-                ImGui::Text(m_onEditMode ? "Edit mode" : "Creation mode");
+                ImGui::Text(m_editorMode == EditorMode::Edit ? "Edit mode" : "Creation mode");
                 ImGui::Separator();
-                auto nodes = m_currentPattern->Nodes;
-                if (m_selected == nullptr || m_currentPattern == nullptr)
+                auto& nodes = m_currentPattern->Nodes;
+                std::shared_ptr<EnemyNode> prevNode = nullptr;
+                for (std::int32_t i = 0; i < nodes.size(); ++i)
+                {
+                    auto node = nodes[i];
+                    if (!node)
+                    {
+                        continue;
+                    }
+
+                    const auto name = std::format("Node: {}", i);
+
+                    if (ImGui::Selectable(name.data(), node->m_isSelected))
+                    {
+                        if (prevNode && prevNode != node)
+                            prevNode->m_isSelected = false;
+                            
+                        node->m_isSelected = !node->m_isSelected;
+                        node->onIsSelectedChanged();
+                        prevNode = node;
+                    }
+                }            
+                
+                ImGui::Separator();
+                if (m_selected == nullptr)
                 {
                     ImGui::Text("Selected:None");
                 }
@@ -51,33 +76,64 @@ namespace dmsh::game
                 {
                     const auto index = static_cast<std::size_t>(std::find(nodes.begin(), nodes.end(), m_selected) - nodes.begin());
                     const auto transform = m_selected->getOwner()->getTransform();
-                    const auto pos = transform->getPosition();
-                    ImGui::Text("Selected:%i\nPos [x:%f y:%f]", index, pos.x, pos.y);
+                    auto pos = transform->getPosition();
+                    ImGui::Text("Selected:%i", index);
+
+                    if (ImGui::InputFloat2("Position", &pos.x)) 
+                    {
+                        transform->setPosition(pos);
+                    }
+
+                    if (ImGui::Checkbox("Use Spline", &m_selected->m_useSpline))
+                    {
+                        m_selected->m_useSpline = !m_selected->m_useSpline;   
+                    }
+
+                    if (ImGui::Checkbox("Loop", &m_selected->m_loop))
+                    {
+                        m_selected->m_loop = !m_selected->m_loop;
+                    }
+
+                    ImGui::Text("TODO: Run event list");
+                    if (ImGui::Checkbox("Shooting on this node", &m_selected->m_shoot))
+                    {
+                        m_selected->m_shoot = !m_selected->m_shoot;
+                    }
+
+                    ImGui::Text("TODO: Shoot Timer");
+                    ImGui::Text("TODO: Bullet Type");
+                    ImGui::Text("TODO: Run onDie event list");
                 }
 
                 ImGui::Separator();
-                for (std::int32_t i = 0; i < nodes.size(); ++i)
-                {
-                    auto node = nodes[i];
-                    if (node)
-                    {
-                        ImGui::Text("Node: %i", i);
-                    }
-                }            
+
+
             }
             else 
             {
                 ImGui::Text("No pattern");
             }
 
+            // FIXME: Ugly
             ImGui::Separator();
-            static std::vector<char> buffer(255);
-            ImGui::InputText("File name", buffer.data(), buffer.size());
+            static std::vector<char> saveFileNamebuffer(255);
+            ImGui::InputText("File name##Save", saveFileNamebuffer.data(), saveFileNamebuffer.size());
 
             if (ImGui::Button("Save"))
             {
-                save(std::string_view(buffer.data(), std::strlen(buffer.data())));
+                save(std::string_view(saveFileNamebuffer.data(), std::strlen(saveFileNamebuffer.data())));
             }
+            // FIXME: Ugly
+            ImGui::Separator();
+            static std::vector<char> loadFileNamebuffer(255);
+            ImGui::InputText("File name##Load", loadFileNamebuffer.data(), loadFileNamebuffer.size());
+
+            if (ImGui::Button("Load"))
+            {
+                const static auto stageLoader = StageLoader::getInstance();
+                stageLoader->loadPattern(std::string_view(loadFileNamebuffer.data(), std::strlen(loadFileNamebuffer.data())));
+            }
+
             ImGui::TextDisabled("Note:\nCreate pattern: key - C\nNext Pattern: key - T\nPrevious pattern: key - R\nHold shift to switch to create mode.");
         }
         ImGui::End();
@@ -140,7 +196,7 @@ namespace dmsh::game
         if (!m_selected)
             return;
         
-        if (m_onEditMode && m_selected->m_isSelected)
+        if (m_editorMode == EditorMode::Edit && m_selected->m_isSelected)
         {
             static const auto gameWindow = core::Window::getInstance();
             const auto mousePos = gameWindow->getMousePosition();
@@ -148,22 +204,34 @@ namespace dmsh::game
             m_selected->getOwner()->getTransform()->setPosition(worldCoords);
         }
     }
+    
+    void NodeEditor::deleteNode(std::shared_ptr<EnemyNode> node)
+    {
+        if (!node)
+        {
+            DMSH_ERROR("Trying to delete null node!");
+            return;
+        }
 
+        const static auto sceneManager = core::SceneManager::getInstance();
+        auto owner = node->getOwner();  
+        auto index = m_currentPatternIndex;
+        if (index > 0)
+            index--;              
+        auto& nodes = m_patterns[index]->Nodes;
+        std::erase(nodes, node);
+
+        sceneManager->deleteGameObject(owner);
+    }
+            
     void NodeEditor::onInput(core::InputManager& input) 
     {
         if (input.isListenerActive("editor_delete_node"))
         {
             if (m_selected)
             {
-                const static auto sceneManager = core::SceneManager::getInstance();
-                auto owner = m_selected->getOwner();  
-                auto index = m_currentPatternIndex;
-                if (index > 0)
-                    index--;              
-
-                std::erase(m_patterns[index]->Nodes, m_selected);
+                deleteNode(m_selected);
                 m_selected = nullptr; 
-                sceneManager->deleteGameObject(owner);
             }
         }
 
@@ -187,7 +255,7 @@ namespace dmsh::game
             switchToBackPattern();
         }
 
-        m_onEditMode = !input.isListenerActive("editor_switch_edit_mode");
+        m_editorMode = !input.isListenerActive("editor_switch_edit_mode") ? EditorMode::Edit : EditorMode::Creation;
     }
 
     void NodeEditor::onRender(sf::RenderTarget& window)
@@ -217,11 +285,20 @@ namespace dmsh::game
             prev = node;
         }     
     }
+    
+    void NodeEditor::createNodeByJsonNode(JsonNode node)
+    {
+        const auto gameNode = createNode();
+        const auto transform = gameNode->getOwner()->getTransform();
+        transform->setPosition({node.x, node.y});
 
-    void NodeEditor::onMouseClicked(const sf::Vector2f& pos)
-    {            
-        if (m_onEditMode || m_currentPattern == nullptr)
-            return;
+        // TODO: Other params
+    }
+
+    std::shared_ptr<EnemyNode> NodeEditor::createNode()
+    {
+        DMSH_ASSERT(m_currentPattern, "No pattern selected but we are trying to create new node");
+
         auto& nodes = m_currentPattern->Nodes;
         static const auto sceneManager = core::SceneManager::getInstance();
         auto go = sceneManager->createGameObject<core::GameObject>();
@@ -234,15 +311,46 @@ namespace dmsh::game
         const auto nodeTexture = resourceManager->get<core::ResourceTypes::Texture>("node");
         DMSH_ASSERT(nodeTexture, "node texture is invalid");        
         auto& goDrawable = go->getDrawable()->create<sf::Sprite>(*nodeTexture->getHandle());        
-
-        auto transform = go->getTransform();
-        transform->setPosition(pos);
         
-        auto node = go->createComponent<EnemyNode>();
+        const auto node = go->createComponent<EnemyNode>();
         node->m_nodeEditor = this;
         
         nodes.push_back(node);
         sceneManager->rebuildZOrdering();
+        
+        return node;
+    }
+
+    void NodeEditor::onMouseClicked(const sf::Vector2f& pos)
+    {            
+        if (m_editorMode != EditorMode::Creation || m_currentPattern == nullptr)
+            return;
+        
+        const auto node = createNode();
+        const auto transform = node->getOwner()->getTransform();
+        transform->setPosition(pos);
+    }
+
+    void NodeEditor::clear()
+    {        
+        if (m_patterns.size() == 0)
+            return;
+        
+        m_selected = nullptr;
+
+        for (auto pattern : m_patterns)
+        {
+            const auto nodes = pattern->Nodes;
+            for (auto node : nodes)
+            {
+                deleteNode(node);
+            }            
+        }
+        
+        m_currentPattern = nullptr;
+        m_currentPatternIndex = 0;
+
+        m_patterns.clear();
     }
 
     void NodeEditor::createNewPattern()
@@ -260,6 +368,11 @@ namespace dmsh::game
     
     void NodeEditor::save(std::string_view name)
     {
+        if (name.size() == 0)
+        {
+            return;
+        }
+
         std::vector<JsonPattern> patterns;
         for (std::int32_t i = 0; i < m_patterns.size(); ++i)
         {
@@ -282,15 +395,15 @@ namespace dmsh::game
                            .y = position.y
                         };
                         jsonNodes.push_back(jsonNode);
-                    }
-                
-                    patterns.push_back(JsonPattern {
-                        .nodes = jsonNodes
-                    });
+                    }                
                 }
+                
+                patterns.push_back(JsonPattern {
+                    .nodes = jsonNodes
+                });
             }
             
-            nlohmann::json patternJsonStructure = patterns;
+            nlohmann::json patternJsonStructure = { "patterns", patterns };
             resourceManager->save(std::format("patterns/{}.json", name), patternJsonStructure.dump(4).data());
         }
     }

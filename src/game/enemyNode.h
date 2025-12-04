@@ -32,7 +32,10 @@ namespace dmsh::game
             NodeEditor* m_nodeEditor;
             
             bool m_isSelected;
+
             bool m_useSpline;
+            bool m_loop;
+            bool m_shoot;
             bool m_isFirstNode;
             bool m_isEndNode;
             

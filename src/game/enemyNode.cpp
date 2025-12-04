@@ -11,9 +11,9 @@ namespace dmsh::game
         //owner->setViewSpace(game::getViewSpaceEditor());   
     }
     
-    void EnemyNode::onMouseUnselected(const sf::Vector2f& pos)
+    void EnemyNode:: onMouseUnselected(const sf::Vector2f& pos)
     {
-        if (!m_nodeEditor->isOnEditMode())
+        if (m_nodeEditor->getEditorMode() != NodeEditor::EditorMode::Edit)
             return;
 
         const auto selected = m_nodeEditor->getSelected();
@@ -92,7 +92,7 @@ namespace dmsh::game
             
     void EnemyNode::onMouseSelected(const sf::Vector2f& pos)
     {
-        if (!m_nodeEditor->isOnEditMode())
+        if (m_nodeEditor->getEditorMode() != NodeEditor::EditorMode::Edit)
             return;
         
         const auto selected = m_nodeEditor->getSelected();
