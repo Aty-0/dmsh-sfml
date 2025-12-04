@@ -99,7 +99,8 @@ namespace dmsh::game
             
             void clear();
             void save(std::string_view name);
-            void createNewPattern();            
+            void createNewPattern(); 
+            void deleteCurrentPattern();           
             void switchPattern();
             void switchToNextPattern();
             void switchToBackPattern();

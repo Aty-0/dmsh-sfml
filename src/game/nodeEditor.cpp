@@ -15,7 +15,7 @@ namespace dmsh::game
         {
             if (m_currentPattern)
             {
-                ImGui::Text("Pattern %i", (m_currentPatternIndex - 1));
+                ImGui::Text("Pattern %i", m_currentPatternIndex);
                 ImGui::Separator();
 
                 if (ImGui::Button("Prev Pattern"))
@@ -26,7 +26,13 @@ namespace dmsh::game
                 ImGui::SameLine();
                 if (ImGui::Button("Delete Pattern"))
                 {
-                    // TODO: 
+                    deleteCurrentPattern(); 
+
+                    if (m_currentPattern == nullptr)
+                    {
+                        ImGui::End();
+                        return;
+                    }
                 }
 
                 ImGui::SameLine();
@@ -111,7 +117,12 @@ namespace dmsh::game
             }
             else 
             {
-                ImGui::Text("No pattern");
+                if (ImGui::Button("Create Pattern"))
+                {                    
+                    createNewPattern();
+                }
+
+                ImGui::Text("No patterns");
             }
 
             // FIXME: Ugly
@@ -331,6 +342,35 @@ namespace dmsh::game
         transform->setPosition(pos);
     }
 
+    void NodeEditor::deleteCurrentPattern()
+    {
+        if (m_patterns.size() == 0)
+            return;
+
+        m_selected = nullptr;
+
+        const auto nodes = m_currentPattern->Nodes;
+        for (auto node : nodes)
+        {
+            deleteNode(node);
+        }   
+
+        std::erase(m_patterns, m_currentPattern);
+        if (m_patterns.size() > 0)
+        {
+            if (m_currentPatternIndex != 0)
+                m_currentPatternIndex--;
+    
+            m_currentPattern = m_patterns[m_currentPatternIndex];
+            auto& nodes = m_currentPattern->Nodes;
+            setVisibilityNodes(nodes, true);
+        }
+        else
+        {
+            m_currentPattern = nullptr;
+        }
+    }
+
     void NodeEditor::clear()
     {        
         if (m_patterns.size() == 0)
@@ -362,8 +402,9 @@ namespace dmsh::game
         }
 
         m_currentPattern = std::make_shared<Pattern>();
+        if (m_patterns.size() > 0)
+            m_currentPatternIndex++;
         m_patterns.push_back(m_currentPattern);
-        m_currentPatternIndex++;
     }
     
     void NodeEditor::save(std::string_view name)
