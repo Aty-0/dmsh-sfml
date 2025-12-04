@@ -13,6 +13,8 @@ namespace dmsh::game
     {
         ImGui::Begin("Node editor");
         {
+            m_windowFocus = ImGui::IsWindowFocused();
+
             if (m_currentPattern)
             {
                 ImGui::Text("Pattern %i", m_currentPatternIndex);
@@ -207,7 +209,7 @@ namespace dmsh::game
         if (!m_selected)
             return;
         
-        if (m_editorMode == EditorMode::Edit && m_selected->m_isSelected)
+        if (!isWindowFocused() && m_editorMode == EditorMode::Edit && m_selected->m_isSelected)
         {
             static const auto gameWindow = core::Window::getInstance();
             const auto mousePos = gameWindow->getMousePosition();

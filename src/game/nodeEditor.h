@@ -92,6 +92,7 @@ namespace dmsh::game
                 m_selected = node;
             }
 
+            inline bool isWindowFocused() const { return m_windowFocus; }
         private:
             void createNodeByJsonNode(JsonNode jsonNode);
             std::shared_ptr<EnemyNode> createNode();
@@ -113,7 +114,8 @@ namespace dmsh::game
             
             std::shared_ptr<EnemyNode> m_selected;
             EditorMode m_editorMode;
-            
+            bool m_windowFocus;
+
             const sf::Color DEFAULT_TEXT_COLOR = sf::Color(255, 255, 255, 150);
     };
 }
