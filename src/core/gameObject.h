@@ -211,12 +211,12 @@ namespace dmsh::core
             {
                 static_assert(std::is_base_of<Component, T>::value, "class must be based on Component");                
                 auto component = std::make_shared<T>(std::forward<Args>(args)...);
-                addComponent(component, std::forward<Args>(args)...);
+                addComponent(component);
                 return component;
             }
             
-            template <typename T, typename... Args>
-            inline void addComponent(std::shared_ptr<T> component, Args&&... args)
+            template <typename T>
+            inline void addComponent(std::shared_ptr<T> component)
             {
                 static_assert(std::is_base_of<Component, T>::value, "class must be based on Component");                
                 auto self = shared_from_this();
