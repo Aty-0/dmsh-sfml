@@ -26,17 +26,20 @@ namespace dmsh::core
 
             inline void setPosition(const sf::Vector2f& pos) 
             {
+                DMSH_ASSERT(Signals.onPositionChanged.slot_count() != 0, "No shape callback sub");
                 m_position = pos; 
                 Signals.onPositionChanged(m_position); 
             } 
             inline void setRotation(const sf::Angle& rotation) 
             { 
+                DMSH_ASSERT(Signals.onRotationChanged.slot_count() != 0, "No shape callback sub");
                 m_rotation = rotation;             
                 Signals.onRotationChanged(m_rotation); 
             } 
 
             inline void setScale(const sf::Vector2f& scale) 
             { 
+                DMSH_ASSERT(Signals.onScaleChanged.slot_count() != 0, "No shape callback sub");
                 m_scale = scale;         
                 Signals.onScaleChanged(m_scale); 
             }
