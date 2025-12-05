@@ -53,7 +53,6 @@ namespace dmsh::game
                 ImGui::Text(m_editorMode == EditorMode::Edit ? "Edit mode" : "Creation mode");
                 ImGui::Separator();
                 auto& nodes = m_currentPattern->Nodes;
-                std::shared_ptr<EnemyNode> prevNode = nullptr;
                 for (std::int32_t i = 0; i < nodes.size(); ++i)
                 {
                     auto node = nodes[i];
@@ -66,12 +65,28 @@ namespace dmsh::game
 
                     if (ImGui::Selectable(name.data(), node->m_isSelected))
                     {
-                        if (prevNode && prevNode != node)
-                            prevNode->m_isSelected = false;
+                        // If clicking the same node that's already selected
+                        if (m_selected == node)
+                        {
+                            // Deselect it
+                            m_selected->m_isSelected = false;
+                            m_selected->onIsSelectedChanged();
+                            m_selected = nullptr;
+                        }
+                        else
+                        {
+                            // Deselect previous node if exists
+                            if (m_selected)
+                            {
+                                m_selected->m_isSelected = false;
+                                m_selected->onIsSelectedChanged();
+                            }
                             
-                        node->m_isSelected = !node->m_isSelected;
-                        node->onIsSelectedChanged();
-                        prevNode = node;
+                            // Select new node
+                            node->m_isSelected = true;
+                            node->onIsSelectedChanged();
+                            m_selected = node;
+                        }
                     }
                 }            
                 
@@ -112,10 +127,6 @@ namespace dmsh::game
                     ImGui::Text("TODO: Bullet Type");
                     ImGui::Text("TODO: Run onDie event list");
                 }
-
-                ImGui::Separator();
-
-
             }
             else 
             {
