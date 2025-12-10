@@ -95,34 +95,36 @@ namespace dmsh::game
         if (input.isListenerActive("player_move_left"))
         {
             m_move.x = -1;
-            setAnimation(AnimationState::MoveLeft);
         }
-        else if (input.isListenerActive("player_move_right"))
+        
+        if (input.isListenerActive("player_move_right"))
         {
             m_move.x = 1;
-            setAnimation(AnimationState::MoveRight);
-        }
-        else 
-        {
-            setAnimation(AnimationState::Idle);
         }
         
         if (input.isListenerActive("player_move_forward"))
         {
             m_move.y = -1;
         }
-        else if (input.isListenerActive("player_move_backward"))
+
+        if (input.isListenerActive("player_move_backward"))
         {
             m_move.y = 1;
         }
-        if (input.isListenerActive("player_shoot"))
-        {
-            shoot();
-        }
-        else
-        {
+        
+        if (input.isListenerActive("player_shoot"))        
+            shoot();        
+        else        
             stopShooting();
-        }
+        
+
+        if (m_move.x == 1)
+            setAnimation(AnimationState::MoveLeft);
+        else if (m_move.x == -1)
+            setAnimation(AnimationState::MoveRight);
+        else 
+            setAnimation(AnimationState::Idle);
+
     }
     
     void Player::onDestroy() 

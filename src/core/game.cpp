@@ -4,17 +4,13 @@
 #include "time.h"
 #include "sceneManager.h"
 #include "inputManager.h"
+#include "soundManager.h"
 #include "text.h"
 #include "coroutine.h"
 #include "spatialGrid.h"
 #include "view.h"
 #include "resourceManager.h"
 #include "postEffects.h"
-
-#include "../game/player.h"
-#include "../game/nodeEditor.h"
-#include "../game/stageLoader.h"
-#include "../game/enemy.h"
 
 #define USE_BENCHMARK
 
@@ -60,10 +56,7 @@ namespace dmsh::core
     static std::shared_ptr<Text> fpsDebugTextComp;    
     static std::shared_ptr<Text> inputDebugTextComp;
     
-    static std::shared_ptr<sf::Shader> grainShader;
-    static std::shared_ptr<sf::Shader> chromaticAbShader;
-    
-    void Game::run()
+    void Game::runEngine()
     {
         DMSH_ASSERT(sf::Shader::isAvailable(), "Shaders are not available!");
         DMSH_ASSERT(sf::Shader::isGeometryAvailable(), "Geom shaders are not available!");
@@ -75,30 +68,10 @@ namespace dmsh::core
         const auto resourceManager = ResourceManager::getInstance();
         resourceManager->init();
         resourceManager->load<ResourceTypes::Font>("fonts/immortal.ttf", "immortal");
-        // TODO: Remove
-        resourceManager->load<ResourceTypes::Sound>("sounds/damage00.wav", "damage");
-        resourceManager->load<ResourceTypes::Texture>("textures/node.png", "node");
-        resourceManager->load<ResourceTypes::Texture>("textures/player.png", "player");
-        resourceManager->load<ResourceTypes::Texture>("textures/enemy_1.png", "enemy_1");
-        resourceManager->load<ResourceTypes::Texture>("textures/bullet.png", "bullet");
-
-        resourceManager->load<ResourceTypes::Shader>("shaders/grain.frag", "grain", sf::Shader::Type::Fragment);
-        resourceManager->load<ResourceTypes::Shader>("shaders/pt.frag", "pt", sf::Shader::Type::Fragment);
-        resourceManager->load<ResourceTypes::Shader>("shaders/ca.frag", "ca", sf::Shader::Type::Fragment);
-
-        auto grainShaderResource = ResourceManager::getInstance()->get<ResourceTypes::Shader>("grain");
-        DMSH_ASSERT(grainShaderResource, "Failed to load grain shader");
-        grainShader = grainShaderResource->getHandle();
-        
-        auto caShaderResource = ResourceManager::getInstance()->get<ResourceTypes::Shader>("ca");
-        DMSH_ASSERT(caShaderResource, "Failed to load chromatic aberration shader");
-        chromaticAbShader = caShaderResource->getHandle();
 
         const auto windowSize = window->getSize();        
         postEffectManager->createCanvas(windowSize);
-        postEffectManager->create(windowSize, grainShader);
-        postEffectManager->create(windowSize, chromaticAbShader);
-
+        
         // TODO: If we want to change window res, we need to update this       
         // TODO: What's size will be perfect ?? 
         const auto cellDefaultSize = sf::Vector2i(150, 150);
@@ -141,28 +114,7 @@ namespace dmsh::core
             inputDebugTextComp->setSize(14);
 
             auto inputDebugTextTransform = inputDebugText->getTransform();
-            inputDebugTextTransform->setPosition({500, 100});
-            
-            auto nodeEditor = sceneManager->createGameObject<GameObject>();
-            auto nodeEditorComp = nodeEditor->createComponent<game::NodeEditor>();
-
-            const auto stageLoader = game::StageLoader::getInstance();
-            stageLoader->setNodeEditorComponentPtr(nodeEditorComp);
-
-            auto playerGo = sceneManager->createGameObject<GameObject>();
-            playerGo->createComponent<game::Player>();
-            
-            for (std::int32_t i = 0; i < 10; ++i)
-            {
-                for (std::int32_t j = 0; j < 10; ++j)
-                {
-                    auto npc = sceneManager->createGameObject<GameObject>();
-                    auto transform = npc->getTransform();
-                    npc->createComponent<game::Enemy>();
-
-                    transform->setPosition({100.0f + (j * 70), 100.0f + (i * 60)});
-                }
-            }            
+            inputDebugTextTransform->setPosition({500, 100});           
         }
 
         sceneManager->rebuildZOrdering();
@@ -199,8 +151,10 @@ namespace dmsh::core
         auto& uiSpaceView = getViewSpaceUI();
         auto& uiView = uiSpaceView.getView();
         uiView.setSize(sf::Vector2f(windowSize));
-        uiView.setCenter({ windowSize.x / 2.0f, windowSize.y / 2.0f });            
-        
+        uiView.setCenter({ windowSize.x / 2.0f, windowSize.y / 2.0f });       
+
+        m_sandbox->onStart();
+
         runLoop(window);
         
         ImGui::SFML::Shutdown();
@@ -254,6 +208,7 @@ namespace dmsh::core
             collisionGrid->onRender(window);
                 
         ImGui::SFML::Render(window);
+        m_sandbox->onRender(window);
         window.display();
     }
     
@@ -277,6 +232,9 @@ namespace dmsh::core
             inputDebugTextComp->setText(inputManager->toString());
             sceneDebugTextComp->setText(sceneManager->toString());
         }
+        
+        m_sandbox->onGui();
+        m_sandbox->onUpdate(delta);
     }
     
     void Game::poolEvents(sf::RenderWindow& window)
@@ -294,6 +252,9 @@ namespace dmsh::core
 
             inputManager->process(pureEvent);
         }
+
+        m_sandbox->onInput();
+
     }
 
     void Game::onClose()
@@ -301,6 +262,7 @@ namespace dmsh::core
         DMSH_DEBUG("Close game");          
         const auto window = Window::getInstance();        
         window->close();
+        m_sandbox->onDestroy();
     }
 
 }

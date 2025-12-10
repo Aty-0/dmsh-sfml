@@ -23,7 +23,8 @@ namespace dmsh::core::debug
             static void draw(sf::RenderTarget& window, const sf::Vector2f& first, const sf::Vector2f& end, const sf::Color& color, float headSize = 25.0f) 
             {
                 const float width = headSize * 0.6f;
-                const auto normal = (end - first).normalized();
+                const auto v = (end - first);
+                const auto normal = v.length() == 0 ? v.normalized() : v;
                 const auto perp1 = normal.perpendicular();
                 const auto perp2 = -normal.perpendicular();
 

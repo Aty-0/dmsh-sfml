@@ -52,7 +52,7 @@ namespace dmsh::game
                 ImGui::Separator();
                 ImGui::Text(m_editorMode == EditorMode::Edit ? "Edit mode" : "Creation mode");
                 ImGui::Separator();
-                auto& nodes = m_currentPattern->Nodes;
+                auto& nodes = m_currentPattern->nodes;
                 for (std::int32_t i = 0; i < nodes.size(); ++i)
                 {
                     auto node = nodes[i];
@@ -190,11 +190,11 @@ namespace dmsh::game
     void NodeEditor::switchPattern()
     {
         // Turn off nodes in prev pattern 
-        setVisibilityNodes(m_currentPattern->Nodes, false);
+        setVisibilityNodes(m_currentPattern->nodes, false);
         // Set new pattern
         m_currentPattern = m_patterns[m_currentPatternIndex];
         // Turn on visible for current 
-        setVisibilityNodes(m_currentPattern->Nodes, true);
+        setVisibilityNodes(m_currentPattern->nodes, true);
     }
 
     void NodeEditor::switchToNextPattern()
@@ -239,7 +239,7 @@ namespace dmsh::game
 
         const static auto sceneManager = core::SceneManager::getInstance();
         auto owner = node->getOwner();  
-        auto& nodes = m_patterns[m_currentPatternIndex]->Nodes;
+        auto& nodes = m_patterns[m_currentPatternIndex]->nodes;
         std::erase(nodes, node);
 
         sceneManager->deleteGameObject(owner);
@@ -284,7 +284,7 @@ namespace dmsh::game
         if (m_currentPattern == nullptr)
             return;
 
-        auto nodes = m_currentPattern->Nodes;
+        auto nodes = m_currentPattern->nodes;
         if (nodes.size() < 1)
             return;
 
@@ -320,7 +320,7 @@ namespace dmsh::game
     {
         DMSH_ASSERT(m_currentPattern, "No pattern selected but we are trying to create new node");
 
-        auto& nodes = m_currentPattern->Nodes;
+        auto& nodes = m_currentPattern->nodes;
         static const auto sceneManager = core::SceneManager::getInstance();
         auto go = sceneManager->createGameObject<core::GameObject>();
         
@@ -359,7 +359,7 @@ namespace dmsh::game
 
         m_selected = nullptr;
 
-        const auto nodes = m_currentPattern->Nodes;
+        const auto nodes = m_currentPattern->nodes;
         for (auto node : nodes)
         {
             deleteNode(node);
@@ -372,7 +372,7 @@ namespace dmsh::game
                 m_currentPatternIndex--;
     
             m_currentPattern = m_patterns[m_currentPatternIndex];
-            auto& nodes = m_currentPattern->Nodes;
+            auto& nodes = m_currentPattern->nodes;
             setVisibilityNodes(nodes, true);
         }
         else
@@ -390,7 +390,7 @@ namespace dmsh::game
 
         for (auto pattern : m_patterns)
         {
-            const auto nodes = pattern->Nodes;
+            const auto nodes = pattern->nodes;
             for (auto node : nodes)
             {
                 deleteNode(node);
@@ -408,7 +408,7 @@ namespace dmsh::game
         if (m_currentPattern)
         {
             // Turn off nodes in prev pattern 
-            setVisibilityNodes(m_currentPattern->Nodes, false);
+            setVisibilityNodes(m_currentPattern->nodes, false);
         }
 
         if (m_patterns.size() > 0)
@@ -431,13 +431,13 @@ namespace dmsh::game
             if (pattern)
             {
                 std::vector<JsonNode> jsonNodes;
-                for (std::int32_t j = 0; j < pattern->Nodes.size(); ++j)
+                for (std::int32_t j = 0; j < pattern->nodes.size(); ++j)
                 {
-                    const auto node = pattern->Nodes[j];
+                    const auto node = pattern->nodes[j];
                     if (node)
                     {
                         const auto position = node->getOwner()->getTransform()->getPosition();
-                        JsonNode jsonNode {
+                        auto jsonNode = JsonNode {
                            .isSelected = node->m_isSelected,
                            .useSpline = node->m_useSpline,
                            .isFirstNode = node->m_isFirstNode,

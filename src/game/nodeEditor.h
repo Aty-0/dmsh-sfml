@@ -14,7 +14,7 @@ namespace dmsh::game
         
     struct Pattern 
     {
-        std::vector<std::shared_ptr<EnemyNode>> Nodes;
+        std::vector<std::shared_ptr<EnemyNode>> nodes;
     };
 
     struct JsonNode
@@ -93,6 +93,7 @@ namespace dmsh::game
             }
 
             inline bool isWindowFocused() const { return m_windowFocus; }
+
         private:
             void createNodeByJsonNode(JsonNode jsonNode);
             std::shared_ptr<EnemyNode> createNode();

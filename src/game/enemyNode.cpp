@@ -33,7 +33,7 @@ namespace dmsh::game
     {
         const auto self = getSelf<EnemyNode>();    
         const auto& drawable = getOwner()->getDrawable()->get<sf::Sprite>();
-        const static auto coroutineScheduler = core::coroutines::CoroutineScheduler::getInstance();
+        static const auto coroutineScheduler = core::coroutines::CoroutineScheduler::getInstance();
         
         coroutineScheduler->stop(m_animationCoroutine);
         
