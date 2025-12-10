@@ -239,10 +239,7 @@ namespace dmsh::game
 
         const static auto sceneManager = core::SceneManager::getInstance();
         auto owner = node->getOwner();  
-        auto index = m_currentPatternIndex;
-        if (index > 0)
-            index--;              
-        auto& nodes = m_patterns[index]->Nodes;
+        auto& nodes = m_patterns[m_currentPatternIndex]->Nodes;
         std::erase(nodes, node);
 
         sceneManager->deleteGameObject(owner);
@@ -414,9 +411,9 @@ namespace dmsh::game
             setVisibilityNodes(m_currentPattern->Nodes, false);
         }
 
-        m_currentPattern = std::make_shared<Pattern>();
         if (m_patterns.size() > 0)
             m_currentPatternIndex++;
+        m_currentPattern = std::make_shared<Pattern>();
         m_patterns.push_back(m_currentPattern);
     }
     
