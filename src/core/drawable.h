@@ -71,6 +71,7 @@ namespace dmsh::core
         {
             m_states.shader = &shader;
         }
+
         private:
         	sf::RenderStates m_states;
             std::shared_ptr<sf::Drawable> m_drawable;

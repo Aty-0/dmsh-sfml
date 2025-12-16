@@ -11,6 +11,7 @@ namespace dmsh::core
             {
                 std::shared_ptr<sf::RenderTexture> renderTexture;
                 std::shared_ptr<sf::Shader> shader;
+                std::shared_ptr<sf::Sprite> sprite;
             };
 
             PostEffectManager();
@@ -18,7 +19,9 @@ namespace dmsh::core
 
             // Create a empty effect with render texture which needed to get rendered scene image  
             void createCanvas(const sf::Vector2u& size);
-            void create(const sf::Vector2u& size, std::shared_ptr<sf::Shader> shader);
+            void resize(const sf::Vector2u& size);
+            void create(std::shared_ptr<sf::Shader> shader);
+
             // TODO: void updateRenderTexturesSize(const sf::Vector2u& newSize);
 
             std::shared_ptr<sf::RenderTexture> begin();
@@ -32,8 +35,11 @@ namespace dmsh::core
 
             inline void setEnable(bool isEnable) { m_isEnable = isEnable; }
             inline bool isEnable() const { return m_isEnable || m_postEffects.size() <= 1; }
+            
+            inline std::vector<std::shared_ptr<PostEffect>> getPostEffects() const { return m_postEffects; }
 
         private:
+            sf::Vector2u m_size;
             bool m_isEnable;
             std::vector<std::shared_ptr<PostEffect>> m_postEffects;
     };

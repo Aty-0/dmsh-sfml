@@ -95,6 +95,8 @@ namespace dmsh::game
             inline bool isWindowFocused() const { return m_windowFocus; }
 
         private:
+            sf::Vector2f makeSpline(sf::Vector2f p0, sf::Vector2f p1, sf::Vector2f p2, float t) const;
+            
             void createNodeByJsonNode(JsonNode jsonNode);
             std::shared_ptr<EnemyNode> createNode();
             void deleteNode(std::shared_ptr<EnemyNode> node);

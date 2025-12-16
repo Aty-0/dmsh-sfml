@@ -19,6 +19,7 @@ namespace dmsh::core
             SceneManager() { }
             ~SceneManager(); 
             
+            void onResolutionChange(const sf::Vector2u& size);
             void onInput(InputManager& input);
             void onMouseClicked(sf::RenderWindow& window);
             void onRender(sf::RenderTarget& window);

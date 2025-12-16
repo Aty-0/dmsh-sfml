@@ -41,8 +41,7 @@ namespace dmsh::core
         
         while (m_currentTime >= 0)
         {
-            DMSH_DEBUG("%f, %f", m_time, m_currentTime);
-            
+            //DMSH_DEBUG("%f, %f", m_time, m_currentTime);
             m_currentTime -= m_tick;
             onTimerUpdate();
 

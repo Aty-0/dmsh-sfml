@@ -8,6 +8,11 @@
 namespace dmsh::game
 {   
     static const auto resourceManager = core::ResourceManager::getInstance();          
+    
+    //sf::Vector2f NodeEditor::makeSpline(sf::Vector2f p0, sf::Vector2f p1, sf::Vector2f p2, float t) const
+    //{
+    //    return sf::Vector2f.lerp(Vector3.Lerp(p0, p1, t), Vector3.Lerp(p1, p2, t), t);
+    //}
 
     void NodeEditor::onGui()
     {
@@ -237,7 +242,7 @@ namespace dmsh::game
             return;
         }
 
-        const static auto sceneManager = core::SceneManager::getInstance();
+        static const auto sceneManager = core::SceneManager::getInstance();
         auto owner = node->getOwner();  
         auto& nodes = m_patterns[m_currentPatternIndex]->nodes;
         std::erase(nodes, node);

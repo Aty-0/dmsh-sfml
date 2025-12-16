@@ -154,7 +154,13 @@ namespace dmsh::core
                     component->onCollisionEnter(collider);
                 }
             }
-        
+            
+            // TODO:
+            virtual void onResolutionChange(const sf::Vector2u& size)
+            {
+
+            }
+
             inline std::shared_ptr<Drawable> getDrawable() const { return m_drawable; }
             inline std::shared_ptr<Transform> getTransform() const { return m_transform; }
 

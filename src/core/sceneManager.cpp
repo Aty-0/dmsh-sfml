@@ -10,7 +10,19 @@ namespace dmsh::core
         m_scene.GameObjects.clear();
         m_scene.GameObjects.shrink_to_fit();
     }
-    
+
+    void SceneManager::onResolutionChange(const sf::Vector2u& size)
+    {
+        for (std::size_t i = 0; i < m_scene.GameObjects.size(); ++i) 
+        {
+            auto weakGo = m_scene.GameObjects[i];
+            if (weakGo.expired())
+                continue;
+
+            weakGo.lock()->onResolutionChange(size);
+        }  
+    }
+
     void SceneManager::onInput(InputManager& input)
     {
         for (std::size_t i = 0; i < m_scene.GameObjects.size(); ++i) 

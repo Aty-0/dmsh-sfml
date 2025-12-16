@@ -141,25 +141,42 @@ namespace dmsh::core
             showColliderGrid = !showColliderGrid;
         });
 
-        auto& gameSpaceView = getViewSpaceGame();
-        auto& view = gameSpaceView.getView();
-        
-        view.setCenter({ windowSize.x * 0.5f, windowSize.y * 0.5f });
-        view.setSize(sf::Vector2f(windowSize));
-        view.setScissor({{0.0f, 0.0f}, {0.7f, 1.0f}});
-        
-        auto& uiSpaceView = getViewSpaceUI();
-        auto& uiView = uiSpaceView.getView();
-        uiView.setSize(sf::Vector2f(windowSize));
-        uiView.setCenter({ windowSize.x / 2.0f, windowSize.y / 2.0f });       
+
+        setupViewSpaces(windowSize);
+        sceneManager->onResolutionChange(windowSize);        
 
         m_sandbox->onStart();
-
         runLoop(window);
         
         ImGui::SFML::Shutdown();
     }
-    
+
+    void Game::setupViewSpaces(const sf::Vector2u& size)
+    {
+        auto& gameSpaceView = getViewSpaceGame();
+        auto& view = gameSpaceView.getView();
+        
+        view.setCenter({ size.x * 0.5f, size.y * 0.5f });
+        view.setSize(static_cast<sf::Vector2f>(size));
+        view.setScissor({{0.0f, 0.0f}, {0.7f, 1.0f}});
+        
+        auto& uiSpaceView = getViewSpaceUI();
+        auto& uiView = uiSpaceView.getView();
+        uiView.setSize(static_cast<sf::Vector2f>(size));
+        uiView.setCenter({ size.x * 0.5f, size.y * 0.5f });       
+    }
+
+    void Game::onResize()
+    {
+        DMSH_DEBUG("Resize all...");
+        static const auto window = Window::getInstance();
+        const auto windowSize = window->getSize(); 
+
+        setupViewSpaces(windowSize);
+        postEffectManager->resize(windowSize);
+        sceneManager->onResolutionChange(windowSize);
+    }
+
     void Game::runLoop(Window* window)
     {
         auto& sfWindow = window->getWindow();     
@@ -235,6 +252,27 @@ namespace dmsh::core
         
         m_sandbox->onGui();
         m_sandbox->onUpdate(delta);
+
+        ImGui::Begin("Debug");
+
+        const auto effects = postEffectManager->getPostEffects();
+        for (std::int32_t i = 0; i < effects.size(); i++)
+        {
+            if (ImGui::CollapsingHeader(std::format("Effect{}", i).c_str()))
+            {
+                const auto effect = effects[i];
+                const auto spriteRect = effect->sprite->getTextureRect();
+                const auto effectTexture = effect->renderTexture->getTexture();
+
+                ImGui::Text("sprite size %u %u", spriteRect.size.x, spriteRect.size.y);
+                ImGui::Text("texture size %u %u", effectTexture.getSize().x, effectTexture.getSize().y);
+
+                ImGui::Image(effectTexture);
+            }
+        }
+        
+        ImGui::End();
+
     }
     
     void Game::poolEvents(sf::RenderWindow& window)
@@ -244,6 +282,11 @@ namespace dmsh::core
             const auto pureEvent = *event;
             ImGui::SFML::ProcessEvent(window, pureEvent);
             
+            if (pureEvent.is<sf::Event::Resized>())
+            {
+                onResize();
+            }   
+
             if (pureEvent.is<sf::Event::Closed>())   
             {
                 onClose();

@@ -44,11 +44,9 @@ namespace dmsh::game
         DMSH_ASSERT(milkShaderResource, "Failed to load milk shader");
         const auto milkShader = milkShaderResource->getHandle();
 
-        // TODO: Need to avoid getting window size
-        const auto windowSize = window->getSize();    
-        postEffectManager->create(windowSize, grainShader);
-        //postEffectManager->create(windowSize, milkShader);        
-        postEffectManager->create(windowSize, chromaticAbShader);        
+        postEffectManager->create(grainShader);
+        //postEffectManager->create(milkShader);        
+        postEffectManager->create(chromaticAbShader);        
 
         auto playerGo = sceneManager->createGameObject<core::GameObject>();
         playerGo->createComponent<game::Player>();
